@@ -2,9 +2,9 @@ include makefile.define
 
 default:all
 
-PATS = geohash.o mapinfo.o ShareMemory.o main.o
+PATS = geohash.o mapinfo.o posinfopool.o areainfopool.o ShareMemory.o main.o
 
-LIB_BASE_OBJS = geohash.o mapinfo.o ShareMemory.o main.o
+LIB_BASE_OBJS = geohash.o mapinfo.o posinfopool.o areainfopool.o ShareMemory.o main.o
 
 LIB_BASE = mapchinapos
 
