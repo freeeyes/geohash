@@ -1,17 +1,20 @@
-#include "geohash.h"
+#include "mapinfo.h"
 
 //g++ -o Test geohash.cpp main.cpp
 int main()
 {
 	CGeoHash m_GeoHash;
 	
-	printf("[main]geohash1=%s.\n", m_GeoHash.Encode(39.928167, 116.389550, 20));
+	
+	printf("[main]geohash1=%s.\n", m_GeoHash.Encode(39.928167, 116.389550, 12));
+	/*
 	//printf("[main]geohash2=%s.\n", m_GeoHash.Get_GeoHash_String(39.928167, 116.389540));
 	//printf("[main]geohash3=%s.\n", m_GeoHash.Get_GeoHash_String(39.928177, 116.389550));86.86385
 	
 	_Geo_Rect obj_Geo_Rect = m_GeoHash.GetGeoRect(39.928167, 116.389550, 20);
 	printf("[main]m_dMinLatitude=%f, m_dMaxLatitude=%f.\n", obj_Geo_Rect.m_dMinLatitude, obj_Geo_Rect.m_dMaxLatitude);
 	printf("[main]m_dMinLongitude=%f, m_dMaxLongitude=%f.\n", obj_Geo_Rect.m_dMinLongitude, obj_Geo_Rect.m_dMaxLongitude);
+	
 	
 	_Geo_Neighbors obj_Geo_Neighbors;
 	obj_Geo_Neighbors = m_GeoHash.GetNeighbors(39.928167, 116.389550, 20);
@@ -22,13 +25,28 @@ int main()
 	}	
 	printf(");\n");
 	
-	obj_Geo_Rect.m_dMinLatitude  = 44.1839;
-	obj_Geo_Rect.m_dMinLongitude = 86.86385;
-	obj_Geo_Rect.m_dMaxLatitude  = 44.18356;
-	obj_Geo_Rect.m_dMaxLongitude = 86.86372;
+	
+	_Geo_Rect obj_Geo_Rect;
+	
+	obj_Geo_Rect.m_dMinLatitude  = 53.3;
+	obj_Geo_Rect.m_dMinLongitude = 73.4;
+	obj_Geo_Rect.m_dMaxLatitude  = 53.3;
+	obj_Geo_Rect.m_dMaxLongitude = 136.3;
+	
 	
 	double dDistance = m_GeoHash.GetDistance(obj_Geo_Rect.m_dMinLatitude, obj_Geo_Rect.m_dMinLongitude, 
 																					 obj_Geo_Rect.m_dMaxLatitude, obj_Geo_Rect.m_dMaxLongitude);
 	printf("[main]distance=%f.\n", dDistance);
+	*/
+	
+	CMapInfo objMapInfo;
+	size_t stShareSize = objMapInfo.GetSize(1000000);
+	printf("[main]All Size=%d.\n", stShareSize); 
+	
+	char* pData = new char[stShareSize];
+	objMapInfo.Init(pData);
+	
+	delete[] pData;
+	
 	return 0;
 }

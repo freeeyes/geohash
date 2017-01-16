@@ -38,7 +38,7 @@ void CGeoHash::Close()
 
 void CGeoHash::GetBits(double dData, double& dMin, double& dMax, char* pData, int nPrecision)
 {
-	printf("[CGeoHash::GetBits](%f)\n", dData);
+	//printf("[CGeoHash::GetBits](%f)\n", dData);
 	//º∆À„bits
 	double dMid = 0;
 	for(int i = 0; i < nPrecision; i++)
