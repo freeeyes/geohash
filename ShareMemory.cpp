@@ -96,7 +96,7 @@ char* Open_Share_Memory_API(shm_key obj_key, size_t obj_shm_size, shm_id& obj_sh
 
 	//创建新的共享内存
 	obj_shm_id = shmget(obj_key, obj_shm_size, PERMS_IPC|IPC_CREAT);
-	if(obj_shm_id > 0)
+	if(obj_shm_id >= 0)
 	{
 		return (char *)shmat(obj_shm_id, (char *)0, 0);
 	}

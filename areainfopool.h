@@ -41,6 +41,7 @@ struct _Area_Info
 		{
 			if(m_objPosList[i] == nPosOffset)
 			{
+				printf("[Delete]nPosOffset=%d OK.\n", nPosOffset);
 				m_objPosList[i] = -1;
 				break;
 			}
@@ -56,6 +57,7 @@ struct _Area_Info
 			if(m_objPosList[i] == -1)
 			{
 				m_objPosList[i] = nPosOffset;
+				printf("[Add]nPosOffset=%d OK.\n", nPosOffset);
 				return true;
 			}
 		}

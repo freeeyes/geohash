@@ -116,6 +116,7 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 	if(pBeforePosInfo != NULL)
 	{
 		//如果之前有已存在经纬度，比较之前和现在的经纬度是否在一个区域
+		printf("[CMapInfo::AddPos]pCurrGeo=%s, pBeforeGeo=%s.\n", pCurrGeo, pBeforeGeo);
 		if(strcmp(pCurrGeo, pBeforeGeo) != 0)
 		{
 			//当前经纬度和之前的经纬度已经不在一个区域，则先删除之前区域的存在点
@@ -158,11 +159,17 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 				}
 				
 				//添加新区域
-				m_objHashArea.Add_Hash_Data(pCurrGeo, m_objAreaInfoList.Get_Node_Offset(pCurrAreaInfo));				
+				if(-1 == m_objHashArea.Add_Hash_Data(pCurrGeo, m_objAreaInfoList.Get_Node_Offset(pCurrAreaInfo)))
+				{
+					printf("[CMapInfo::AddPos]m_objHashArea is full.\n");
+					return false;						
+				}			
 			}	
 		}
 		else
 		{
+			printf("[CMapInfo::AddPos]Area is the same.\n");
+			
 			//在同一区域内，则只更新当前点信息
 			pBeforePosInfo->m_dPosLatitude  = dPosLatitude;
 			pBeforePosInfo->m_dPosLongitude = dPosLongitude;
@@ -171,6 +178,7 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 	}
 	else
 	{
+		printf("[CMapInfo::AddPos]pCurrGeo=%s.\n", pCurrGeo);
 		//之前点并不存在
 		pBeforePosInfo = m_objPosInfoList.Create();
 		if(NULL == pBeforePosInfo)
@@ -179,9 +187,17 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 			return false;
 		}
 		
+		sprintf(pBeforePosInfo->m_szMsisdn, "%s", pMsisdn);
 		pBeforePosInfo->m_dPosLatitude  = dPosLatitude;
 		pBeforePosInfo->m_dPosLongitude = dPosLongitude;
-		pBeforePosInfo->m_ttCurrTime    = ttPos;		
+		pBeforePosInfo->m_ttCurrTime    = ttPos;	
+		
+		nPosBefore = m_objPosInfoList.Get_Node_Offset(pBeforePosInfo);
+		if(-1 == m_objHashCurrPos.Add_Hash_Data(pMsisdn, nPosBefore))
+		{
+				printf("[CMapInfo::AddPos]m_objHashCurrPos is full.\n");
+				return false;				
+		}
 		
 		//查找新区域是否已存在
 		int nAreaCurr = m_objHashArea.Get_Hash_Box_Data(pCurrGeo);
@@ -214,7 +230,11 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 			}
 			
 			//添加新区域
-			m_objHashArea.Add_Hash_Data(pCurrGeo, m_objAreaInfoList.Get_Node_Offset(pCurrAreaInfo));				
+			if(-1 == m_objHashArea.Add_Hash_Data(pCurrGeo, m_objAreaInfoList.Get_Node_Offset(pCurrAreaInfo)))
+			{
+				printf("[CMapInfo::AddPos]m_objHashArea is full.\n");
+				return false;						
+			}
 		}	
 	}
 	
