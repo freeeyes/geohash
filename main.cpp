@@ -6,8 +6,13 @@ int main()
 {
 	CGeoHash m_GeoHash;
 	
+	//printf("[main]geohash1=%s.\n", m_GeoHash.Encode(39.946289, 116.411133, 12));
+	//printf("[main]geohash1=%s.\n", m_GeoHash.Encode(39.947367, 116.389550, 12));
+	
+	//printf("[main]Distance=%f.\n", m_GeoHash.GetDistance(39.924316, 116.411133, 39.924316, 116.367188));
+	//printf("[main]Distance=%f.\n", m_GeoHash.GetDistance(39.946289, 116.367188, 39.902344, 116.367188));
+	
 	/*
-	printf("[main]geohash1=%s.\n", m_GeoHash.Encode(39.928167, 116.389550, 12));
 	//printf("[main]geohash2=%s.\n", m_GeoHash.Get_GeoHash_String(39.928167, 116.389540));
 	//printf("[main]geohash3=%s.\n", m_GeoHash.Get_GeoHash_String(39.928177, 116.389550));86.86385
 	
@@ -44,7 +49,7 @@ int main()
 	printf("[main]All Size=%d.\n", stShareSize); 
 	
 	int nPoolSize = 600000;
-	shm_key obj_key = 30001;
+	shm_key obj_key = 30010;
 	shm_id obj_shm_id;
 	bool blCreate = true;		
 	char* pData = Open_Share_Memory_API(obj_key, stShareSize, obj_shm_id, blCreate);
@@ -73,7 +78,16 @@ int main()
 	objMapInfo.AddPos("13661201023", 39.928167, 116.389550, ttNow);
 	
 	//测试第二个点
-	objMapInfo.AddPos("13661201023", 37.928167, 116.389550, ttNow);
+	objMapInfo.AddPos("13661201024", 39.928367, 116.389550, ttNow);
+	
+	vector<_Pos_Info*> vecPosList;
+ 	objMapInfo.FindPos(39.928367, 116.389550, 1000.0, vecPosList);
+ 	for(int i = 0; i < (int)vecPosList.size(); i++)
+ 	{
+ 		printf("[FindPos]m_szMsisdn=%s, m_dPosLatitude=%f, m_dPosLongitude=%f.\n", vecPosList[i]->m_szMsisdn,
+ 																																							 vecPosList[i]->m_dPosLatitude,
+ 																																							 vecPosList[i]->m_dPosLongitude);
+ 	}
 	
 	//delete[] pData;
 	return 0;

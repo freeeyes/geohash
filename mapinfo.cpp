@@ -95,7 +95,7 @@ void CMapInfo::Load(char* pData)
 
 bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongitude, time_t ttPos)
 {
-	CGeoHash m_GeoHash;
+	CGeoHash objGeoHash;
 	char pBeforeGeo[10] = {'\0'};
 	char pCurrGeo[10]   = {'\0'};
 	
@@ -108,10 +108,10 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 	if(nPosBefore >= 0)
 	{
 		pBeforePosInfo = m_objPosInfoList.Get_NodeOffset_Ptr(nPosBefore);
-		sprintf(pBeforeGeo, "%s", m_GeoHash.Encode(pBeforePosInfo->m_dPosLatitude, pBeforePosInfo->m_dPosLongitude, GEO_PERSITION));
+		sprintf(pBeforeGeo, "%s", objGeoHash.Encode(pBeforePosInfo->m_dPosLatitude, pBeforePosInfo->m_dPosLongitude, GEO_PERSITION));
 	}
 	
-	sprintf(pCurrGeo, "%s", m_GeoHash.Encode(dPosLatitude, dPosLongitude, GEO_PERSITION));
+	sprintf(pCurrGeo, "%s", objGeoHash.Encode(dPosLatitude, dPosLongitude, GEO_PERSITION));
 	
 	if(pBeforePosInfo != NULL)
 	{
@@ -236,6 +236,51 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 				return false;						
 			}
 		}	
+	}
+	
+	return true;
+}
+
+bool CMapInfo::FindPos(double dPosLatitude, double dPosLongitude, double dDistance, vector<_Pos_Info*>& vecPosList)
+{
+	CGeoHash objGeoHash;
+	_Area_Info* pCurrArea = NULL;
+	
+	vecPosList.clear();
+	
+	_Geo_Neighbors objNeighbors = objGeoHash.GetNeighbors(dPosLatitude, dPosLongitude, GEO_PERSITION);
+	
+	//遍历查找最近的九宫格
+	for(int i = 0; i < 9; i++)
+	{
+		//printf("[CMapInfo::FindPos](%d)m_szNerghbors=%s.\n", i, objNeighbors.m_szNerghbors[i]);
+		int nAreaCurr = m_objHashArea.Get_Hash_Box_Data(objNeighbors.m_szNerghbors[i]);
+		if(nAreaCurr != -1)
+		{
+			//printf("[CMapInfo::FindPos]Find m_szNerghbors=%s.\n", objNeighbors.m_szNerghbors[i]);
+			pCurrArea = m_objAreaInfoList.Get_NodeOffset_Ptr(nAreaCurr);
+			if(NULL != pCurrArea)
+			{
+				for(int j = 0; j < MAX_AREA_OBJECT_COUNT; j++)
+				{
+					if(pCurrArea->m_objPosList[j] >= 0)
+					{
+						//取出当前点
+						_Pos_Info* pPosInfo = m_objPosInfoList.Get_NodeOffset_Ptr(pCurrArea->m_objPosList[j]);
+						if(NULL != pPosInfo)
+						{
+							//计算符合两点间距离的点
+							double dCurrDistance = objGeoHash.GetDistance(dPosLatitude, dPosLongitude, 
+																												    pPosInfo->m_dPosLatitude, pPosInfo->m_dPosLongitude);
+							if(dDistance >= dCurrDistance)
+							{
+								vecPosList.push_back(pPosInfo);
+							}
+						}
+					} 
+				}
+			}
+		}
 	}
 	
 	return true;

@@ -142,6 +142,10 @@ char* CGeoHash::Encode(double dLatitude, double dLongitude, int nPrecision)
 	double LongitudeMin = -180.0f;
 	double LongitudeMax = 180.0f;	
 	
+	memset(m_szComboBits, 0, 100);
+	memset(m_szLatitudeBits, 0, 50);
+	memset(m_szLongitudeBits, 0, 50);
+	
 	if(nPrecision % 5 != 0)
 	{
 		if((nPrecision + nPrecision + 1) % 5 != 0)
@@ -164,38 +168,38 @@ char* CGeoHash::Encode(double dLatitude, double dLongitude, int nPrecision)
 		GetBits(dLongitude, LongitudeMin, LongitudeMax, m_szLongitudeBits, nPrecision + 1);		
 	}
 	
-	int nPosBegin     = 0;
-	int nPosEnd       = nPosBegin + 5;
-	int nPos = 0;
+	int nPos          = 0;
+	int nAllComboLen  = 0;
 	
 	//计算出组合码，并计算出对应Base32编码
 	for(int i = 0; i < nPrecision; i++)
 	{
 		m_szComboBits[i*2]     = m_szLongitudeBits[i];
 		m_szComboBits[i*2 + 1] = m_szLatitudeBits[i];
-		
-		if(i*2 + 1 >= nPosEnd)
-		{
-			int nIndex = GetBase32Index(m_szComboBits, nPosBegin, nPosEnd);
-			nPosBegin = nPosEnd;
-			nPosEnd   = nPosBegin + 5;
-			m_szGeoHash[nPos] = m_szBase32[nIndex];
-			nPos++;
-			//printf("[CGeoHash::Get_GeoHash_String](%d)nPosEnd=%d, Data=%c.\n", nPos, nPosEnd, m_szBase32[nIndex]);
-		}
 	}
 	
-	//保证计算出的字符串必须能被5整除
+	//如果纬度比经度多1
 	if(nPrecision % 5 != 0)
 	{
-		m_szComboBits[nPrecision*2] = m_szLatitudeBits[nPrecision + 1];
+		m_szComboBits[nPrecision*2] = m_szLongitudeBits[nPrecision];
+		nAllComboLen = nPrecision*2 + 1;
+	}
+	else
+	{
+		nAllComboLen = nPrecision*2; 
 	}
 	
-	int nIndex = GetBase32Index(m_szComboBits, nPosBegin, nPosEnd);
-	nPosBegin = nPosEnd;
-	nPosEnd   = nPosBegin + 5;
-	m_szGeoHash[nPos] = m_szBase32[nIndex];
-	nPos++;	
+	//按5位一换数据
+	//printf("[A](%d)m_szLongitudeBits=%s.\n", nPrecision + 1, m_szLongitudeBits);
+	//printf("[A](%d)m_szLatitudeBits=%s.\n", nPrecision, m_szLatitudeBits);
+	//printf("[A](%d)m_szComboBits=%s.\n", nAllComboLen, m_szComboBits);
+	for(int i = 0; i < nAllComboLen; i = i + 5)
+	{
+		int nIndex = GetBase32Index(m_szComboBits, i, i + 5);
+		m_szGeoHash[nPos] = m_szBase32[nIndex];
+		nPos++;
+	}
+
 	m_szGeoHash[nPos] = '\0';
 	return m_szGeoHash;	
 }

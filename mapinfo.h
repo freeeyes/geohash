@@ -6,6 +6,9 @@
 #include "posinfopool.h"
 #include "areainfopool.h"
 
+#include <vector>
+using namespace std;
+
 //中国地图范围内的所有区域，按照500米的范围分割，并存入共享内存。
 //add by freeeyes
 
@@ -21,6 +24,8 @@ public:
 	void Load(char* pData);
 	
 	bool AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongitude, time_t ttPos);
+	
+	bool FindPos(double dPosLatitude, double dPosLongitude, double dDistance, vector<_Pos_Info*>& vecPosList);
 	
 	size_t GetSize(int nMaxCount);
 	
