@@ -272,6 +272,7 @@ bool CMapInfo::FindPos(double dPosLatitude, double dPosLongitude, double dDistan
 							//计算符合两点间距离的点
 							double dCurrDistance = objGeoHash.GetDistance(dPosLatitude, dPosLongitude, 
 																												    pPosInfo->m_dPosLatitude, pPosInfo->m_dPosLongitude);
+							//printf("[CMapInfo::FindPos](%s)dCurrDistance=%f.\n", pPosInfo->m_szMsisdn, dCurrDistance);
 							if(dDistance >= dCurrDistance)
 							{
 								vecPosList.push_back(pPosInfo);
