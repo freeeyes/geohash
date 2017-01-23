@@ -241,6 +241,75 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 	return true;
 }
 
+void CMapInfo::GetNeighbors(double dPosLatitude, double dPosLongitude, double dDistance, vector<string>& objNeighborsList)
+{
+	CGeoHash objGeoHash;
+	//经纬度为12精度的时候的边长
+	double dRowSetp = 3752.822013f;
+	double dColSetp = 4891.972027f;
+	
+	objNeighborsList.clear();
+	
+	//首先获得指定距离在什么范围下
+	int nPersition    = GEO_PERSITION;
+	if(dDistance >= 626172.419555f)
+	{
+		nPersition    = 5;
+	}
+	else if(dDistance >= 121008.232567f)
+	{
+		nPersition    = 7;	
+	}
+	else if(dDistance >= 19567.888111f)
+	{
+		nPersition    = 10;			
+	}
+	else
+	{
+		nPersition    = GEO_PERSITION;		
+	}	
+	
+	if(nPersition != GEO_PERSITION)
+	{
+		//获得当前矩形的范围
+		_Geo_Rect obj_Geo_Rect = objGeoHash.GetGeoRect(dPosLatitude, dPosLongitude, nPersition);
+		//得到矩形的长和宽
+		double dRowSize = objGeoHash.GetDistance(obj_Geo_Rect.m_dMinLatitude, 
+										    										 obj_Geo_Rect.m_dMinLongitude, 
+												    							 	 obj_Geo_Rect.m_dMinLatitude, 
+														    						 obj_Geo_Rect.m_dMaxLongitude);
+														    						 
+		double dColSize = objGeoHash.GetDistance(obj_Geo_Rect.m_dMinLatitude, 
+																						 obj_Geo_Rect.m_dMinLongitude, 
+																						 obj_Geo_Rect.m_dMaxLatitude, 
+																						 obj_Geo_Rect.m_dMinLongitude);	
+																						 
+		//根据长宽获得当前所有包含精度为12的区块
+		for(double dRow = obj_Geo_Rect.m_dMinLongitude; dRow < obj_Geo_Rect.m_dMinLongitude + dRowSize; dRow = dRow + dRowSetp)
+		{
+			for(double dCol = obj_Geo_Rect.m_dMinLatitude; dCol < obj_Geo_Rect.m_dMinLatitude + dColSize; dCol = dCol + dColSetp)
+			{
+				string strArea = (string)objGeoHash.Encode(dCol, dRow, GEO_PERSITION);
+				printf("[CMapInfo::GetNeighbors]strArea=%s.\n", strArea.c_str());
+				objNeighborsList.push_back(strArea);
+			}
+		}													    						 
+	}
+	else
+	{
+		_Geo_Neighbors objNeighbors = objGeoHash.GetNeighbors(dPosLatitude, dPosLongitude, GEO_PERSITION);
+		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[0]);
+		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[1]);
+		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[2]);
+		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[3]);
+		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[4]);
+		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[5]);
+		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[6]);
+		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[7]);
+		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[8]);
+	}
+}
+
 bool CMapInfo::FindPos(double dPosLatitude, double dPosLongitude, double dDistance, vector<_Pos_Info*>& vecPosList)
 {
 	CGeoHash objGeoHash;
@@ -248,13 +317,14 @@ bool CMapInfo::FindPos(double dPosLatitude, double dPosLongitude, double dDistan
 	
 	vecPosList.clear();
 	
-	_Geo_Neighbors objNeighbors = objGeoHash.GetNeighbors(dPosLatitude, dPosLongitude, GEO_PERSITION);
+	vector<string> objNeighborsList;
+	GetNeighbors(dPosLatitude, dPosLongitude, dDistance, objNeighborsList);
 	
 	//遍历查找最近的九宫格
-	for(int i = 0; i < 9; i++)
+	for(int i = 0; i < (int)objNeighborsList.size(); i++)
 	{
 		//printf("[CMapInfo::FindPos](%d)m_szNerghbors=%s.\n", i, objNeighbors.m_szNerghbors[i]);
-		int nAreaCurr = m_objHashArea.Get_Hash_Box_Data(objNeighbors.m_szNerghbors[i]);
+		int nAreaCurr = m_objHashArea.Get_Hash_Box_Data(objNeighborsList[i].c_str());
 		if(nAreaCurr != -1)
 		{
 			//printf("[CMapInfo::FindPos]Find m_szNerghbors=%s.\n", objNeighbors.m_szNerghbors[i]);

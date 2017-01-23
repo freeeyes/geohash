@@ -7,6 +7,7 @@
 #include "areainfopool.h"
 
 #include <vector>
+#include <string>
 using namespace std;
 
 //中国地图范围内的所有区域，按照500米的范围分割，并存入共享内存。
@@ -31,6 +32,8 @@ public:
 	
 private:
 	void prepareCryptTable();	
+	
+	void GetNeighbors(double dPosLatitude, double dPosLongitude, double dDistance, vector<string>& objNeighborsList);
 	
 private:	
 	char*         m_pCryptTable;     //hash词典算法词
