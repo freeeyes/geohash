@@ -245,8 +245,8 @@ void CMapInfo::GetNeighbors(double dPosLatitude, double dPosLongitude, double dD
 {
 	CGeoHash objGeoHash;
 	//经纬度为12精度的时候的边长
-	double dRowSetp = 3752.822013f;
-	double dColSetp = 4891.972027f;
+	double dRowSetp = 0.043945f;
+	double dColSetp = 0.043945f;
 	
 	objNeighborsList.clear();
 	
@@ -274,26 +274,25 @@ void CMapInfo::GetNeighbors(double dPosLatitude, double dPosLongitude, double dD
 		//获得当前矩形的范围
 		_Geo_Rect obj_Geo_Rect = objGeoHash.GetGeoRect(dPosLatitude, dPosLongitude, nPersition);
 		//得到矩形的长和宽
-		double dRowSize = objGeoHash.GetDistance(obj_Geo_Rect.m_dMinLatitude, 
-										    										 obj_Geo_Rect.m_dMinLongitude, 
-												    							 	 obj_Geo_Rect.m_dMinLatitude, 
-														    						 obj_Geo_Rect.m_dMaxLongitude);
+		double dRowSize = obj_Geo_Rect.m_dMaxLongitude - obj_Geo_Rect.m_dMinLongitude;
 														    						 
-		double dColSize = objGeoHash.GetDistance(obj_Geo_Rect.m_dMinLatitude, 
-																						 obj_Geo_Rect.m_dMinLongitude, 
-																						 obj_Geo_Rect.m_dMaxLatitude, 
-																						 obj_Geo_Rect.m_dMinLongitude);	
-																						 
+		double dColSize = obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude;	
+		
+		printf("[CMapInfo::GetNeighbors]nPersition=%d,dRowSize=%f,dColSize=%f.\n", nPersition, dRowSize, dColSize);
+																					 
 		//根据长宽获得当前所有包含精度为12的区块
 		for(double dRow = obj_Geo_Rect.m_dMinLongitude; dRow < obj_Geo_Rect.m_dMinLongitude + dRowSize; dRow = dRow + dRowSetp)
 		{
 			for(double dCol = obj_Geo_Rect.m_dMinLatitude; dCol < obj_Geo_Rect.m_dMinLatitude + dColSize; dCol = dCol + dColSetp)
 			{
+				//printf("[CMapInfo::GetNeighbors]dCol=%f,dRow=%f.\n", dCol, dRow);
 				string strArea = (string)objGeoHash.Encode(dCol, dRow, GEO_PERSITION);
-				printf("[CMapInfo::GetNeighbors]strArea=%s.\n", strArea.c_str());
+				//printf("[CMapInfo::GetNeighbors]strArea=%s.\n", strArea.c_str());
 				objNeighborsList.push_back(strArea);
 			}
-		}													    						 
+		}	
+		
+		printf("[CMapInfo::GetNeighbors]objNeighborsList size=%d.\n", objNeighborsList.size());											    						 
 	}
 	else
 	{
@@ -307,6 +306,7 @@ void CMapInfo::GetNeighbors(double dPosLatitude, double dPosLongitude, double dD
 		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[6]);
 		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[7]);
 		objNeighborsList.push_back((string)objNeighbors.m_szNerghbors[8]);
+		printf("[CMapInfo::GetNeighbors]objNeighborsList size=%d.\n", objNeighborsList.size());	
 	}
 }
 

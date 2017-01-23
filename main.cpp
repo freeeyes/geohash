@@ -4,9 +4,8 @@
 //g++ -o Test geohash.cpp main.cpp
 int main()
 {
-	CGeoHash m_GeoHash;
-	
 	/*
+	CGeoHash m_GeoHash;
 	printf("[main]geohash1=%s.\n", m_GeoHash.Encode(39.946289, 116.411133, 12));
 	_Geo_Rect obj_Geo_Rect = m_GeoHash.GetGeoRect(39.946289, 116.411133, 12);
 	
@@ -15,16 +14,10 @@ int main()
 	//сроб
 	printf("[main]Right=%f,%f.\n", obj_Geo_Rect.m_dMinLatitude, obj_Geo_Rect.m_dMinLongitude);
 	
-	printf("[main]Row Distance=%f.\n", m_GeoHash.GetDistance(obj_Geo_Rect.m_dMinLatitude, 
-																													obj_Geo_Rect.m_dMinLongitude, 
-																													obj_Geo_Rect.m_dMinLatitude, 
-																													obj_Geo_Rect.m_dMaxLongitude));
+	printf("[main]Row Distance=%f.\n",  obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude);
 	
-	printf("[main]col Distance=%f.\n", m_GeoHash.GetDistance(obj_Geo_Rect.m_dMinLatitude, 
-																													obj_Geo_Rect.m_dMinLongitude, 
-																													obj_Geo_Rect.m_dMaxLatitude, 
-																													obj_Geo_Rect.m_dMinLongitude));
-	*/	
+	printf("[main]col Distance=%f.\n", obj_Geo_Rect.m_dMaxLongitude - obj_Geo_Rect.m_dMinLongitude);
+	*/
 	
 	CMapInfo objMapInfo;
 	size_t stShareSize = objMapInfo.GetSize(1000000);
@@ -63,7 +56,7 @@ int main()
 	objMapInfo.AddPos("13661201024", 39.928367, 116.389550, ttNow);
 	
 	vector<_Pos_Info*> vecPosList;
- 	objMapInfo.FindPos(39.928367, 116.389550, 1000.0, vecPosList);
+ 	objMapInfo.FindPos(39.928367, 116.389550, 100000.0, vecPosList);
  	for(int i = 0; i < (int)vecPosList.size(); i++)
  	{
  		printf("[FindPos]m_szMsisdn=%s, m_dPosLatitude=%f, m_dPosLongitude=%f.\n", vecPosList[i]->m_szMsisdn,
