@@ -292,9 +292,6 @@ _Geo_Neighbors CGeoHash::GetNeighbors(double dLatitude, double dLongitude, int n
 
 double CGeoHash::GetDistance(double dLatitude, double dLongitude, double dsLatitude, double dsLongitude)
 {
-	//double er = 6378140;    // 6378700.0f; // 单位：米(地球半径)
-	//double PI = 3.1415926;
-	
 	double radlat1 = M_PI*dLatitude/180.0f;
 	double radlat2 = M_PI*dsLatitude/180.0f;
 	
@@ -323,10 +320,6 @@ double CGeoHash::GetDistance(double dLatitude, double dLongitude, double dsLatit
 	return dist;	 
 }
 
-/* Return the bounding box of the search area centered at latitude,longitude
- * having a radius of radius_meter. bounds[0] - bounds[2] is the minimum
- * and maxium longitude, while bounds[1] - bounds[3] is the minimum and
- * maximum latitude. */
 _Geo_Rect CGeoHash::GetBoundingBox(double dLatitude, double dLongitude, double dRadiusMeters)
 {
 	_Geo_Rect obj_Geo_Rect;
