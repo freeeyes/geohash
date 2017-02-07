@@ -4,8 +4,8 @@
 CC = g++
 AR = ar
 CFLAGS = -g -O2 -D__LINUX__
-INCLUDES = -I./ -I../ -I/usr/include -I/usr/local/include/
-LIBS = -L/usr/lib64 -L/usr/local/lib64 -L./ -L../ -L/usr/local/lib/ -ldl 
+INCLUDES = -I./ -I../ -I/usr/include -I/usr/local/include/ -I./GeoHash/ -I./Http/ -I./rapidjson
+LIBS = -L/usr/lib64 -L/usr/local/lib64 -L./ -L../ -L/usr/local/lib/ -ldl -lpthread
 # *****************************
 # ????
 # *****************************
