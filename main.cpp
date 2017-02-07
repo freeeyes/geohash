@@ -4,21 +4,6 @@
 //g++ -o Test geohash.cpp main.cpp
 int main()
 {
-	/*
-	CGeoHash m_GeoHash;
-	printf("[main]geohash1=%s.\n", m_GeoHash.Encode(39.946289, 116.411133, 12));
-	_Geo_Rect obj_Geo_Rect = m_GeoHash.GetGeoRect(39.946289, 116.411133, 12);
-	
-	//вСио
-	printf("[main]Left=%f,%f.\n", obj_Geo_Rect.m_dMaxLatitude, obj_Geo_Rect.m_dMaxLongitude);
-	//сроб
-	printf("[main]Right=%f,%f.\n", obj_Geo_Rect.m_dMinLatitude, obj_Geo_Rect.m_dMinLongitude);
-	
-	printf("[main]Row Distance=%f.\n",  obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude);
-	
-	printf("[main]col Distance=%f.\n", obj_Geo_Rect.m_dMaxLongitude - obj_Geo_Rect.m_dMinLongitude);
-	*/
-	
 	CMapInfo objMapInfo;
 	size_t stShareSize = objMapInfo.GetSize(1000000);
 	printf("[main]All Size=%d.\n", stShareSize); 

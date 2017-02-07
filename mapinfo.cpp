@@ -272,7 +272,8 @@ void CMapInfo::GetNeighbors(double dPosLatitude, double dPosLongitude, double dD
 	if(nPersition != GEO_PERSITION)
 	{
 		//获得当前矩形的范围
-		_Geo_Rect obj_Geo_Rect = objGeoHash.GetGeoRect(dPosLatitude, dPosLongitude, nPersition);
+		//_Geo_Rect obj_Geo_Rect = objGeoHash.GetGeoRect(dPosLatitude, dPosLongitude, nPersition);
+		_Geo_Rect obj_Geo_Rect = objGeoHash.GetBoundingBox(dPosLatitude, dPosLongitude, dDistance);
 		//得到矩形的长和宽
 		double dRowSize = obj_Geo_Rect.m_dMaxLongitude - obj_Geo_Rect.m_dMinLongitude;
 														    						 

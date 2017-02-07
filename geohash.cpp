@@ -78,6 +78,16 @@ int CGeoHash::GetBase32Index(char* pData, int nBegin, int nEnd)
 	return nRet;
 }
 
+double CGeoHash::deg_rad(double ang)
+{
+	return ang / D_R;
+}
+
+double CGeoHash::rad_deg(double ang)
+{
+	return ang * D_R;
+}
+
 char* CGeoHash::Encode(double dLatitude, double dLongitude)
 {
 	double LatitudeMin  = -90.0f;
@@ -282,34 +292,49 @@ _Geo_Neighbors CGeoHash::GetNeighbors(double dLatitude, double dLongitude, int n
 
 double CGeoHash::GetDistance(double dLatitude, double dLongitude, double dsLatitude, double dsLongitude)
 {
-	double er = 6378140;    // 6378700.0f; // 单位：米(地球半径)
-	double PI = 3.1415926;
+	//double er = 6378140;    // 6378700.0f; // 单位：米(地球半径)
+	//double PI = 3.1415926;
 	
-	double radlat1 = PI*dLatitude/180.0f;
-	double radlat2 = PI*dsLatitude/180.0f;
+	double radlat1 = M_PI*dLatitude/180.0f;
+	double radlat2 = M_PI*dsLatitude/180.0f;
 	
 	//now long.
-	double radlong1 = PI*dLongitude/180.0f;
-	double radlong2 = PI*dsLongitude/180.0f;
+	double radlong1 = M_PI*dLongitude/180.0f;
+	double radlong2 = M_PI*dsLongitude/180.0f;
 	
-	if( radlat1 < 0 ) radlat1 = PI/2 + fabs(radlat1);// south
-	if( radlat1 > 0 ) radlat1 = PI/2 - fabs(radlat1);// north
-	if( radlong1 < 0 ) radlong1 = PI*2 - fabs(radlong1);//west
-	if( radlat2 < 0 ) radlat2 = PI/2 + fabs(radlat2);// south
-	if( radlat2 > 0 ) radlat2 = PI/2 - fabs(radlat2);// north
-	if( radlong2 < 0 ) radlong2 = PI*2 - fabs(radlong2);// west
+	if( radlat1 < 0 ) radlat1 = M_PI/2 + fabs(radlat1);// south
+	if( radlat1 > 0 ) radlat1 = M_PI/2 - fabs(radlat1);// north
+	if( radlong1 < 0 ) radlong1 = M_PI*2 - fabs(radlong1);//west
+	if( radlat2 < 0 ) radlat2 = M_PI/2 + fabs(radlat2);// south
+	if( radlat2 > 0 ) radlat2 = M_PI/2 - fabs(radlat2);// north
+	if( radlong2 < 0 ) radlong2 = M_PI*2 - fabs(radlong2);// west
 	
-	double x1 = er * cos(radlong1) * sin(radlat1);
-	double y1 = er * sin(radlong1) * sin(radlat1);
-	double z1 = er * cos(radlat1);
-	double x2 = er * cos(radlong2) * sin(radlat2);
-	double y2 = er * sin(radlong2) * sin(radlat2);
-	double z2 = er * cos(radlat2);
+	double x1 = EARTH_RADIUS_IN_METERS * cos(radlong1) * sin(radlat1);
+	double y1 = EARTH_RADIUS_IN_METERS * sin(radlong1) * sin(radlat1);
+	double z1 = EARTH_RADIUS_IN_METERS * cos(radlat1);
+	double x2 = EARTH_RADIUS_IN_METERS * cos(radlong2) * sin(radlat2);
+	double y2 = EARTH_RADIUS_IN_METERS * sin(radlong2) * sin(radlat2);
+	double z2 = EARTH_RADIUS_IN_METERS * cos(radlat2);
 	double d = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2)+(z1-z2)*(z1-z2));
 	
-	//side, side, side, law of cosines and arccos
-	double theta = acos((er*er+er*er-d*d) / (2* er * er));
-	double dist  = theta * er;
+	double theta = acos((EARTH_RADIUS_IN_METERS*EARTH_RADIUS_IN_METERS+EARTH_RADIUS_IN_METERS*EARTH_RADIUS_IN_METERS-d*d) / (2* EARTH_RADIUS_IN_METERS * EARTH_RADIUS_IN_METERS));
+	double dist  = theta * EARTH_RADIUS_IN_METERS;
 	
 	return dist;	 
+}
+
+/* Return the bounding box of the search area centered at latitude,longitude
+ * having a radius of radius_meter. bounds[0] - bounds[2] is the minimum
+ * and maxium longitude, while bounds[1] - bounds[3] is the minimum and
+ * maximum latitude. */
+_Geo_Rect CGeoHash::GetBoundingBox(double dLatitude, double dLongitude, double dRadiusMeters)
+{
+	_Geo_Rect obj_Geo_Rect;
+	
+  obj_Geo_Rect.m_dMinLongitude = dLongitude - rad_deg(dRadiusMeters/EARTH_RADIUS_IN_METERS/cos(deg_rad(dLatitude)));
+  obj_Geo_Rect.m_dMaxLongitude = dLongitude + rad_deg(dRadiusMeters/EARTH_RADIUS_IN_METERS/cos(deg_rad(dLatitude)));
+  obj_Geo_Rect.m_dMinLatitude  = dLatitude - rad_deg(dRadiusMeters/EARTH_RADIUS_IN_METERS);
+  obj_Geo_Rect.m_dMaxLatitude  = dLatitude + rad_deg(dRadiusMeters/EARTH_RADIUS_IN_METERS);	
+  
+  return obj_Geo_Rect;
 }

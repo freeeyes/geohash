@@ -2,6 +2,9 @@
 #include <string.h>
 #include <math.h>
 
+#define D_R (M_PI / 180.0)
+const double EARTH_RADIUS_IN_METERS = 6372797.560856;
+
 //实现grohash算法的过程
 //add by freeeyes
 
@@ -65,12 +68,18 @@ public:
 	//计算任意两点间的距离
 	double GetDistance(double dLatitude, double dLongitude, double dsLatitude, double dsLongitude);
 	
+	//得到指定半径区域的矩形区域
+	_Geo_Rect GetBoundingBox(double dLatitude, double dLongitude, double dRadiusMeters);
+	
 private:	
 	void Init(int nPrecision);
 	void Close();
 	
 	void GetBits(double dData, double& dMin, double& dMax, char* pData, int nPrecision);
 	int  GetBase32Index(char* pData, int nBegin, int nEnd);
+	
+	double deg_rad(double ang);
+	double rad_deg(double ang);
 	
 private:	
 	char  m_szBase32[33];
