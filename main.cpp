@@ -19,6 +19,8 @@ using namespace rapidjson;
 
 #define HTTP_PORT 10000
 
+#define JSON_FINDPOS_TEXT "\"Msisdn\":\"%s\",\"Latitude\":\"%f\",\"Longitude\":\"%f\",\"CurrTime\":\"%ld\""
+
 SOAP_SOCKET queue[MAX_QUEUE];
 
 //全局函数
@@ -123,7 +125,7 @@ int text_post_handler(struct soap *soap)
 	Document document;	
 	
 	char *buf;
-	char retBuf[1024];
+	char retBuf[2048] = {'\0'};
 	memset(retBuf,0,sizeof(retBuf));
   size_t len;
   soap_http_body(soap, &buf, &len);
@@ -136,31 +138,75 @@ int text_post_handler(struct soap *soap)
 	double dRadius    = 0.0f;
 	if(false == document.Parse(buf).HasParseError())
 	{
-		if(document.HasMember("Latitude") ==  true)
+		if(strcmp(soap->path, "/GeoHash/Search/") == 0)
 		{
-			dLatitude = atof(document["Latitude"].GetString());
-		}
-		if(document.HasMember("Longitude") ==  true)
-		{
-			dLongitude = atof(document["Longitude"].GetString());
-		}
-		if(document.HasMember("Radius") ==  true)
-		{
-			dRadius = atof(document["Radius"].GetString());
-		}						
+			//解析GeoHash查询功能参数
+			if(document.HasMember("Latitude") ==  true)
+			{
+				dLatitude = atof(document["Latitude"].GetString());
+			}
+			if(document.HasMember("Longitude") ==  true)
+			{
+				dLongitude = atof(document["Longitude"].GetString());
+			}
+			if(document.HasMember("Radius") ==  true)
+			{
+				dRadius = atof(document["Radius"].GetString());
+			}
+			
+			if(dLatitude != 0.0f && dLongitude != 0.0f && dRadius != 0.0f)
+			{
+				//这里添加geo调用算法
+				vector<_Pos_Info*> vecPosList;
+			 	bool blState = g_objMapInfo.FindPos(dLatitude, dLongitude, dRadius, vecPosList);
+			 	
+			 	if(true == blState)
+			 	{
+			 		//将结果拼装成Json
+			 		char szTemp[500] = {'\0'};
+			 		retBuf[0] = '{';
+			 		int nPos  = 1;
+			 		for(int i = 0; i < (int)vecPosList.size(); i++)
+			 		{
+			 			if(i != (int)vecPosList.size() - 1)
+			 			{
+			 				sprintf(szTemp, JSON_FINDPOS_TEXT, vecPosList[i]->m_szMsisdn,
+ 																								 vecPosList[i]->m_dPosLatitude,
+ 																								 vecPosList[i]->m_dPosLongitude,
+ 																								 vecPosList[i]->m_ttCurrTime);
+ 							int nLen = (int)strlen(szTemp);
+ 						  memcpy(&retBuf[nPos], szTemp, nLen);
+ 						  nPos += nLen;
+ 						  retBuf[nPos] = ',';
+ 						  nPos += 1;
+ 						}
+ 						else
+ 						{
+			 				sprintf(szTemp, JSON_FINDPOS_TEXT, vecPosList[i]->m_szMsisdn,
+ 																								 vecPosList[i]->m_dPosLatitude,
+ 																								 vecPosList[i]->m_dPosLongitude,
+ 																								 vecPosList[i]->m_ttCurrTime);
+ 							int nLen = (int)strlen(szTemp);
+ 						  memcpy(&retBuf[nPos], szTemp, nLen);
+ 						  nPos += nLen;
+ 						  retBuf[nPos] = '}';
+ 						  nPos += 1; 							
+ 						}
+			 		}
+				}
+				else
+				{
+					sprintf(retBuf, "{\"error\":\"2\"}");
+				}
+			}
+			else
+			{
+				sprintf(retBuf, "{\"error\":\"1\"}");
+			}				
+		}					
 	}	
 	
-	if(dLatitude != 0.0f && dLongitude != 0.0f && dRadius != 0.0f)
-	{
-		//这里添加geo调用算法
-		vector<_Pos_Info*> vecPosList;
-	 	g_objMapInfo.FindPos(dLatitude, dLongitude, dRadius, vecPosList);
-	}
-	else
-	{
-		sprintf(retBuf, "{\"error\":\"1\"}");
-	}
-	
+	printf("[text_post_handler]retBuf=%s.\n", retBuf);
   len = strlen(retBuf);
   soap_response(soap, SOAP_HTML);
   soap_send_raw(soap, retBuf, len);
