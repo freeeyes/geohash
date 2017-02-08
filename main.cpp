@@ -133,11 +133,11 @@ int text_post_handler(struct soap *soap)
   printf("[text_post_handler]path=%s.\n", soap->path);
 	
 	//解析Json, 获得查询相关参数
-	double dLatitude  = 0.0f;
-	double dLongitude = 0.0f;
-	double dRadius    = 0.0f;
 	if(false == document.Parse(buf).HasParseError())
 	{
+		double dLatitude  = 0.0f;
+		double dLongitude = 0.0f;
+		double dRadius    = 0.0f;		
 		if(strcmp(soap->path, "/GeoHash/Search/") == 0)
 		{
 			//解析GeoHash查询功能参数
@@ -203,6 +203,48 @@ int text_post_handler(struct soap *soap)
 			{
 				sprintf(retBuf, "{\"error\":\"1\"}");
 			}				
+		}
+		else if(strcmp(soap->path, "/GeoHash/Add/") == 0)
+		{
+			char   szMsisdn[15]   = {'\0'};
+			double dLatitude      = 0.0f;
+			double dLongitude     = 0.0f;
+			time_t ttNow          = 0;
+						
+			//解析添加当前点数据参数
+			if(document.HasMember("Msisdn") ==  true)
+			{
+				sprintf(szMsisdn, "%s", document["Msisdn"].GetString());
+			}			
+			if(document.HasMember("Latitude") ==  true)
+			{
+				dLatitude = atof(document["Latitude"].GetString());
+			}
+			if(document.HasMember("Longitude") ==  true)
+			{
+				dLongitude = atof(document["Longitude"].GetString());
+			}
+			if(document.HasMember("Time") ==  true)
+			{
+				ttNow = (time_t)atol(document["Time"].GetString());
+			}
+			
+			if(strlen(szMsisdn) > 0 && dLatitude != 0.0f && dLongitude != 0.0f && ttNow != 0)
+			{
+				bool blState = g_objMapInfo.AddPos(szMsisdn, dLatitude, dLongitude, ttNow);
+				if(true == blState)
+				{
+					sprintf(retBuf, "{\"success\":\"0\"}");
+				}
+				else
+				{
+					sprintf(retBuf, "{\"error\":\"2\"}");
+				}
+			}
+			else
+			{
+				sprintf(retBuf, "{\"error\":\"1\"}");
+			}										
 		}					
 	}	
 	
