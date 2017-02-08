@@ -3,6 +3,15 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdarg.h>
+#include <signal.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
 #include <pthread.h>
 #include "soapH.h"
 #include "httppost.h"
@@ -25,6 +34,96 @@ SOAP_SOCKET queue[MAX_QUEUE];
 
 //全局函数
 CMapInfo g_objMapInfo;
+
+void Gdaemon()
+{
+	pid_t pid;
+
+	signal(SIGTTOU,SIG_IGN);
+	signal(SIGTTIN,SIG_IGN);
+	signal(SIGTSTP,SIG_IGN);
+
+	if(setpgrp() == -1)
+	{	
+		perror("setpgrp failure");
+	}
+
+	signal(SIGHUP,SIG_IGN);
+
+	if((pid = fork()) < 0)
+	{	
+		perror("fork failure");
+		exit(1);
+	}
+	else if(pid > 0)
+	{
+		exit(0);
+	}
+
+	setsid();
+	umask(0);
+
+	signal(SIGCLD,SIG_IGN);
+	signal(SIGCHLD,SIG_IGN);
+	signal(SIGPIPE,SIG_IGN);
+}
+
+//写独占文件锁
+int AcquireWriteLock(int fd, int start, int len)
+{
+	struct flock arg;
+	arg.l_type = F_WRLCK; // 加写锁
+	arg.l_whence = SEEK_SET;
+	arg.l_start = start;
+	arg.l_len = len;
+	arg.l_pid = getpid();
+
+	return fcntl(fd, F_SETLKW, &arg);
+}
+
+//释放独占文件锁
+int ReleaseLock(int fd, int start, int len)
+{
+	struct flock arg;
+	arg.l_type = F_UNLCK; //  解锁
+	arg.l_whence = SEEK_SET;
+	arg.l_start = start;
+	arg.l_len = len;
+	arg.l_pid = getpid();
+
+	return fcntl(fd, F_SETLKW, &arg);
+}
+
+//查看写锁
+int SeeLock(int fd, int start, int len)
+{
+	struct flock arg;
+	arg.l_type = F_WRLCK;
+	arg.l_whence = SEEK_SET;
+	arg.l_start = start;
+	arg.l_len = len;
+	arg.l_pid = getpid();
+
+	if (fcntl(fd, F_GETLK, &arg) != 0) // 获取锁
+	{
+		return -1; // 测试失败
+	}
+
+	if (arg.l_type == F_UNLCK)
+	{
+		return 0; // 无锁
+	}
+	else if (arg.l_type == F_RDLCK)
+	{
+		return 1; // 读锁
+	}
+	else if (arg.l_type == F_WRLCK)
+	{
+		return 2; // 写所
+	}
+
+	return 0;
+}
 
 int head = 0;
 int tail = 0;
@@ -256,8 +355,9 @@ int text_post_handler(struct soap *soap)
   return SOAP_OK;
 }
 
-int main()
+int Chlid_Run()
 {
+	//Http子进程
 	size_t stShareSize = g_objMapInfo.GetSize(1000000);
 	printf("[main]All Size=%d.\n", stShareSize); 
 	
@@ -285,24 +385,6 @@ int main()
 		printf("[main]Create share memory is fail.\n");
 		return 0;
 	}
-	
-	/*
-	//测试第一个点
-	time_t ttNow = time(NULL);
-	objMapInfo.AddPos("13661201023", 39.928167, 116.389550, ttNow);
-	
-	//测试第二个点
-	objMapInfo.AddPos("13661201024", 39.928367, 116.389550, ttNow);
-	
-	vector<_Pos_Info*> vecPosList;
- 	objMapInfo.FindPos(39.928367, 116.389550, 100000.0, vecPosList);
- 	for(int i = 0; i < (int)vecPosList.size(); i++)
- 	{
- 		printf("[FindPos]m_szMsisdn=%s, m_dPosLatitude=%f, m_dPosLongitude=%f.\n", vecPosList[i]->m_szMsisdn,
- 																																							 vecPosList[i]->m_dPosLatitude,
- 																																							 vecPosList[i]->m_dPosLongitude);
- 	}
- 	*/
  	
 	int ret = 0;
 	char *buf;
@@ -384,4 +466,101 @@ int main()
 	
 	//delete[] pData;
 	return 0;
+}
+
+int main()
+{
+	//当前监控子线程个数
+	int nNumChlid = 1;
+	
+	//检测时间间隔参数
+	struct timespec tsRqt;
+	
+	//文件锁
+	int fd_lock = 0;
+	
+	int nRet = 0;
+
+	//主进程检测时间间隔（设置每隔5秒一次）
+	tsRqt.tv_sec  = 5;
+	tsRqt.tv_nsec = 0;
+	
+	//获得当前路径
+	char szWorkDir[255] = {0};
+  if(!getcwd(szWorkDir, 260))  
+  {  
+		exit(1);
+  }
+  printf("[Main]szWorkDir=%s.\n", szWorkDir);
+	
+	// 打开（创建）锁文件
+	char szFileName[200] = {'\0'};
+	memset(szFileName, 0, sizeof(flock));
+	sprintf(szFileName, "%s/testwatch.lk", szWorkDir);
+	fd_lock = open(szFileName, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH);
+	if (fd_lock < 0)
+	{
+		printf("open the flock and exit, errno = %d.", errno);
+		exit(1);
+	}
+	
+	//查看当前文件锁是否已锁
+	nRet = SeeLock(fd_lock, 0, sizeof(int));
+	if (nRet == -1 || nRet == 2) 
+	{
+		printf("file is already exist!");
+		exit(1);
+	}
+	
+	//如果文件锁没锁，则锁住当前文件锁
+	if (AcquireWriteLock(fd_lock, 0, sizeof(int)) != 0)
+	{
+		printf("lock the file failure and exit, idx = 0!.");
+		exit(1);
+	}
+	
+	//写入子进程锁信息
+	lseek(fd_lock, 0, SEEK_SET);
+	for (int nIndex = 0; nIndex <= nNumChlid; nIndex++)
+	{
+		write(fd_lock, &nIndex, sizeof(nIndex));
+	}
+	
+	Gdaemon();
+  
+	while (1)
+	{
+		for (int nChlidIndex = 1; nChlidIndex <= nNumChlid; nChlidIndex++)
+		{
+			//测试每个子进程的锁是否还存在
+			nRet = SeeLock(fd_lock, nChlidIndex * sizeof(int), sizeof(int));
+			if (nRet == -1 || nRet == 2)
+			{
+				continue;
+			}
+			//如果文件锁没有被锁，则设置文件锁，并启动子进程
+			int npid = fork();
+			if (npid == 0)
+			{
+				//上文件锁
+				if(AcquireWriteLock(fd_lock, nChlidIndex * sizeof(int), sizeof(int)) != 0)
+				{
+					printf("child %d AcquireWriteLock failure.\n", nChlidIndex);
+					exit(1);
+				}
+				
+				//启动子进程
+				Chlid_Run();
+				
+				//子进程在执行完任务后必须退出循环和释放锁 
+				ReleaseLock(fd_lock, nChlidIndex * sizeof(int), sizeof(int));	        
+				}
+			}
+		
+		printf("child count(%d) is ok.\n", nNumChlid);
+		//检查间隔
+		nanosleep(&tsRqt, NULL);
+	}
+	
+	return 0;	
 }
