@@ -30,6 +30,14 @@ struct _PosLink_Info
 		m_pNext        = NULL;		
 	}
 	
+	void Clear()
+	{
+		m_nPosOffset   = 0;
+		m_nAreaIndex   = 0;
+		m_cUsed        = 0;
+		m_pNext        = NULL;			
+	}
+	
 	void Set_Index(int nIndex)
 	{
 		m_nIndex = nIndex;

@@ -88,7 +88,7 @@ _PosLink_Info* CPosLinkPool::Create()
 	
 	if(m_PosLinkList[m_nCurrIndex].m_cUsed == 0)
 	{
-		//printf("[CAreaInfoPool::Create]m_nCurrIndex=%d, nIndex=%d.\n", m_nCurrIndex, m_PosLinkList[m_nCurrIndex].Get_Index());
+		//printf("[CPosLinkPool::Create]m_nCurrIndex=%d, nIndex=%d.\n", m_nCurrIndex, m_PosLinkList[m_nCurrIndex].Get_Index());
 		m_PosLinkList[m_nCurrIndex].m_cUsed = 1;
 		return &m_PosLinkList[m_nCurrIndex++];
 	}
@@ -105,6 +105,7 @@ _PosLink_Info* CPosLinkPool::Create()
 					m_nCurrIndex = 0;
 				}
 				m_PosLinkList[i].m_cUsed = 1;
+				//printf("[CPosLinkPool::Create]m_nCurrIndex=%d, nIndex=%d.\n", m_nCurrIndex, m_PosLinkList[m_nCurrIndex].Get_Index());
 				return &m_PosLinkList[i];				
 			}
 		}
@@ -118,6 +119,7 @@ _PosLink_Info* CPosLinkPool::Create()
 			{
 				m_nCurrIndex = i + 1;
 				m_PosLinkList[i].m_cUsed = 1;
+				//printf("[CPosLinkPool::Create]m_nCurrIndex=%d, nIndex=%d.\n", m_nCurrIndex, m_PosLinkList[m_nCurrIndex].Get_Index());
 				return &m_PosLinkList[i];				
 			}			
 		}
@@ -145,6 +147,6 @@ bool CPosLinkPool::Delete(_PosLink_Info* pPosLinkInfo)
 		return false;
 	}
 	
-	m_PosLinkList[pPosLinkInfo->Get_Index()].Init();
+	m_PosLinkList[pPosLinkInfo->Get_Index()].Clear();
 	return true;		
 }

@@ -44,11 +44,14 @@ struct _Area_Info
 			_PosLink_Info* pTail = m_pPosList;
 			while(pTail != NULL)
 			{
-				pTail->m_nPosOffset == nPosOffset;
-				return pTail;
+				//printf("[Get]pTail->m_nPosOffset=%d.\n", pTail->m_nPosOffset);
+				if(pTail->m_nPosOffset == nPosOffset)
+				{
+					return pTail;
+				}
+				
+				pTail = pTail->m_pNext;
 			}
-			
-			pTail = pTail->m_pNext;
 		}
 		
 		return NULL;	
@@ -70,10 +73,15 @@ struct _Area_Info
 			{
 				if(pTail == pPosInfo)
 				{
+					//printf("[Delete]m_pPosList=0x%08x.\n", m_pPosList);
+					//printf("[Delete]pPosInfo=0x%08x.\n", pPosInfo);
+					//printf("[Delete]pBefore=0x%08x.\n", pBefore);
+					//printf("[Delete]pTail=0x%08x.\n", pTail);
+					//printf("[_Area_Info::Delete]pTail=0x%08x.\n", pTail);
 					if(NULL == pBefore)
 					{
 						//是第一个
-						m_pPosList = NULL;
+						m_pPosList = m_pPosList->m_pNext;
 						return true;
 					}
 					else
@@ -93,8 +101,9 @@ struct _Area_Info
 		return false;
 	}
 	
-	bool Add(_PosLink_Info* pPosInfo)
+	bool Add(_PosLink_Info* pPosInfo, char* pHashGeo)
 	{
+		sprintf(m_szHashGeo, "%s", pHashGeo);
 		if(m_pPosList == NULL)
 		{
 			//如果是链表的第一个
@@ -103,7 +112,7 @@ struct _Area_Info
 		else
 		{
 			_PosLink_Info* pTail = m_pPosList;
-			while(pTail->m_pNext != NULL)
+			while(NULL != pTail->m_pNext)
 			{
 				pTail = pTail->m_pNext;
 			}
