@@ -15,7 +15,7 @@ CAreaInfoPool::~CAreaInfoPool()
 
 void CAreaInfoPool::Close()
 {
-	m_pBase        = NULL;	
+	m_pBase         = NULL;	
 	m_AreaInfoList  = NULL;
 }
 
@@ -54,10 +54,25 @@ size_t CAreaInfoPool::Load(int nPoolCount, char* pData)
 	m_AreaInfoList = (_Area_Info* )&pData[nPos];
 	nPos += sizeof(_Area_Info) * nPoolCount;
 	
+	for(int i = 0; i < nPoolCount; i++)
+	{
+		m_AreaInfoList[i].m_pPosList = NULL;
+	}
+	
 	m_nPoolCount   = nPoolCount;
 	m_nCurrIndex   = 0;	
 	
 	return nPos;		
+}
+
+_Area_Info* CAreaInfoPool::Get(int nIndex)
+{
+	if(nIndex < 0 || nIndex >= m_nPoolCount)
+	{
+		return NULL;
+	}
+	
+	return &m_AreaInfoList[nIndex];	
 }
 
 _Area_Info* CAreaInfoPool::Create()
@@ -95,7 +110,7 @@ _Area_Info* CAreaInfoPool::Create()
 			}
 		}
 		
-		printf("[CAreaInfoPool::Create]m_nCurrIndex=%d,m_nPoolCount=%d.\n", m_nCurrIndex, m_nPoolCount);
+		//printf("[CAreaInfoPool::Create]m_nCurrIndex=%d,m_nPoolCount=%d.\n", m_nCurrIndex, m_nPoolCount);
 		int nStart = 0;
 		//没找到，再重头开始找
 		for(int i = nStart; i < m_nCurrIndex - 1; i++)

@@ -42,6 +42,7 @@ private:
 	int           m_AreaCount;       //所有的区域个数 
 	CPosInfoPool  m_objPosInfoList;  //当前点对象池
 	CAreaInfoPool m_objAreaInfoList; //当前区域对象池 
+	CPosLinkPool  m_objPosLinkList;  //当前点链表对象池 
 };
 
 #endif

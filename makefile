@@ -6,6 +6,7 @@ PATS = ./GeoHash/geohash.o \
 	   ./GeoHash/mapinfo.o \
 	   ./GeoHash/posinfopool.o \
 	   ./GeoHash/areainfopool.o \
+	   ./GeoHash/poslinkpool.o \
 	   ./GeoHash/ShareMemory.o \
 	   ./Http/soapC.o \
 	   ./Http/soapServer.o \
@@ -18,6 +19,7 @@ LIB_BASE_OBJS = geohash.o \
 	            mapinfo.o \
 	            posinfopool.o \
 	            areainfopool.o \
+				poslinkpool.o \
 	            ShareMemory.o \
 	            soapC.o \
 	            soapServer.o \
