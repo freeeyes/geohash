@@ -7,12 +7,10 @@
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <time.h>
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <errno.h>
 #include <pthread.h>
+#include <dlfcn.h>
 #include "soapH.h"
 #include "httppost.h"
 #include "json.h"
@@ -53,6 +51,11 @@ struct _Ini_Data
 	}
 };
 
+
+//全局GeoHashMap接口
+CMapInfo g_objMapInfo;
+_Ini_Data g_objIniData;
+
 //读取Ini文件
 void Load_Ini_Data(_Ini_Data& obj_Ini_Data)
 {
@@ -71,9 +74,39 @@ void Load_Ini_Data(_Ini_Data& obj_Ini_Data)
 	printf("[Load_Ini_Data]m_strLoadModuleName=%s.\n", obj_Ini_Data.m_strLoadModuleName.c_str());
 }
 
-//全局GeoHashMap接口
-CMapInfo g_objMapInfo;
-_Ini_Data g_objIniData;
+//加载初始化内存插件
+int Load_Init_Memory_Logic(const char* pLogicFile, IMapInfo* pMapInfo)
+{
+	void* m_pModulehandle = NULL;
+	
+	//加载插件
+	m_pModulehandle = dlopen(pLogicFile, RTLD_NOW);
+	if(NULL == m_pModulehandle)
+	{
+		printf("[Load_Init_Memory_Logic]dlopen(%s) error(%s).\n", pLogicFile, dlerror());
+		return -1;
+	}
+	
+	int (*LoadModuleData)(IMapInfo* pMapInfo);
+	LoadModuleData = (int(*)(IMapInfo* pMapInfo))dlsym(m_pModulehandle, "LoadModuleData");
+	if(NULL == LoadModuleData)
+	{
+		printf("[Load_Init_Memory_Logic](%s)(%s) LoadModuleData no find.\n", pLogicFile, dlerror());
+		return -1;
+	}
+	
+	//调用插件方法
+	int nRet = LoadModuleData(pMapInfo);
+	if(0 != nRet)
+	{
+		printf("[Load_Init_Memory_Logic](%s) LoadModuleData is error(%d).\n", pLogicFile, nRet);
+		return -1;		
+	}
+	
+	dlclose(m_pModulehandle);
+	
+	return 0;
+}
 
 void Gdaemon()
 {
@@ -416,6 +449,12 @@ int Chlid_Run()
 		{
 			memset(pData, 0, stShareSize);
 			g_objMapInfo.Init(pData);
+			
+			//共享内存建立，这里加载初始化插件
+			if(0 != Load_Init_Memory_Logic(g_objIniData.m_strLoadModuleName.c_str(), (IMapInfo* )&g_objMapInfo))
+			{
+				exit(0);
+			}
 		}
 		else
 		{

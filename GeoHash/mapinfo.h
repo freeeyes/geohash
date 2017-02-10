@@ -1,21 +1,18 @@
 #ifndef _MAPINFO_H
 #define _MAPINFO_H
 
+#include "imapinfo.h"
 #include "HashTable.h"
 #include "geohash.h"
-#include "posinfopool.h"
+#include "poslinkpool.h"
 #include "areainfopool.h"
-
-#include <vector>
-#include <string>
-using namespace std;
 
 //中国地图范围内的所有区域，按照500米的范围分割，并存入共享内存。
 //add by freeeyes
 
 #define GEO_PERSITION 12   
 
-class CMapInfo
+class CMapInfo : public IMapInfo
 {
 public:
 	CMapInfo();
