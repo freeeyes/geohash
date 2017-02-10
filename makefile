@@ -13,6 +13,7 @@ PATS = ./GeoHash/geohash.o \
 	   ./Http/httppost.o \
 	   ./Http/stdsoap2.o \
 	   ./Http/json.o \
+	   ./ini/ini_loader.o \
 	   main.o
 
 LIB_BASE_OBJS = geohash.o \
@@ -26,6 +27,7 @@ LIB_BASE_OBJS = geohash.o \
 	            httppost.o \
 	            stdsoap2.o \
 	            json.o \
+	            ini_loader.o \
 	            main.o
 
 LIB_BASE = mapchinapos

@@ -16,6 +16,7 @@
 #include "soapH.h"
 #include "httppost.h"
 #include "json.h"
+#include "ini_loader.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h" 
@@ -26,14 +27,53 @@ using namespace rapidjson;
 #define MAX_THR (10)
 #define MAX_QUEUE (1000)
 
-#define HTTP_PORT 10000
+#define DEFAULT_POOL_SIZE        1000000
+#define DEFAULT_HTTP_PORT        10000
+#define DEFAULT_SHARE_MEMORY_KEY 30010
 
 #define JSON_FINDPOS_TEXT "\"Msisdn\":\"%s\",\"Latitude\":\"%f\",\"Longitude\":\"%f\",\"CurrTime\":\"%ld\""
 
 SOAP_SOCKET queue[MAX_QUEUE];
 
-//全局函数
+#define INI_FILE_NAME "./geoarea.ini"
+
+//ini配置文件数据结构
+struct _Ini_Data
+{
+	int    m_nPoolSize;
+	int    m_nHttpPort;
+	int    m_nShareMemoryKey;
+	string m_strLoadModuleName;
+	
+	_Ini_Data()
+	{ 
+		m_nPoolSize       = DEFAULT_POOL_SIZE;
+		m_nHttpPort       = DEFAULT_HTTP_PORT;
+		m_nShareMemoryKey = DEFAULT_SHARE_MEMORY_KEY;
+	}
+};
+
+//读取Ini文件
+void Load_Ini_Data(_Ini_Data& obj_Ini_Data)
+{
+	util::config::ini_loader objIniLoader;
+	
+	objIniLoader.load_file(INI_FILE_NAME);
+	
+	objIniLoader.dump_to("MAX_AREA_POOL_SIZE", obj_Ini_Data.m_nPoolSize);
+	objIniLoader.dump_to("HTTP_PORT", obj_Ini_Data.m_nHttpPort);
+	objIniLoader.dump_to("SHARE_MEMORY_KEY", obj_Ini_Data.m_nShareMemoryKey);
+	objIniLoader.dump_to("LOAD_MODULE_NAME", obj_Ini_Data.m_strLoadModuleName);
+	
+	printf("[Load_Ini_Data]m_nPoolSize=%d.\n", obj_Ini_Data.m_nPoolSize);
+	printf("[Load_Ini_Data]m_nHttpPort=%d.\n", obj_Ini_Data.m_nHttpPort);
+	printf("[Load_Ini_Data]m_nShareMemoryKey=%d.\n", obj_Ini_Data.m_nShareMemoryKey);
+	printf("[Load_Ini_Data]m_strLoadModuleName=%s.\n", obj_Ini_Data.m_strLoadModuleName.c_str());
+}
+
+//全局GeoHashMap接口
 CMapInfo g_objMapInfo;
+_Ini_Data g_objIniData;
 
 void Gdaemon()
 {
@@ -357,12 +397,14 @@ int text_post_handler(struct soap *soap)
 
 int Chlid_Run()
 {
-	//Http子进程
-	size_t stShareSize = g_objMapInfo.GetSize(1000000);
+	//读取ini文件
+	Load_Ini_Data(g_objIniData);
+	
+	//初始化共享内存
+	size_t stShareSize = g_objMapInfo.GetSize(g_objIniData.m_nPoolSize);
 	printf("[main]All Size=%d.\n", stShareSize); 
 	
-	int nPoolSize = 600000;
-	shm_key obj_key = 30010;
+	shm_key obj_key = g_objIniData.m_nShareMemoryKey;
 	shm_id obj_shm_id;
 	bool blCreate = true;		
 	char* pData = Open_Share_Memory_API(obj_key, stShareSize, obj_shm_id, blCreate);
@@ -385,7 +427,8 @@ int Chlid_Run()
 		printf("[main]Create share memory is fail.\n");
 		return 0;
 	}
- 	
+
+	//初始化Http服务相关 	
 	int ret = 0;
 	char *buf;
   size_t len;
@@ -407,7 +450,7 @@ int Chlid_Run()
   SOAP_SOCKET m, s;
   int i;
 
-  m = soap_bind(&soap, NULL, HTTP_PORT, BACKLOG);
+  m = soap_bind(&soap, NULL, g_objIniData.m_nHttpPort, BACKLOG);
   if (!soap_valid_socket(m))
   {
       printf("soap_valid_socket\n");
@@ -526,7 +569,7 @@ int main()
 		write(fd_lock, &nIndex, sizeof(nIndex));
 	}
 	
-	Gdaemon();
+	//Gdaemon();
   
 	while (1)
 	{
@@ -557,7 +600,7 @@ int main()
 				}
 			}
 		
-		printf("child count(%d) is ok.\n", nNumChlid);
+		//printf("child count(%d) is ok.\n", nNumChlid);
 		//检查间隔
 		nanosleep(&tsRqt, NULL);
 	}
