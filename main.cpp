@@ -608,7 +608,7 @@ int main()
 		write(fd_lock, &nIndex, sizeof(nIndex));
 	}
 	
-	//Gdaemon();
+	Gdaemon();
   
 	while (1)
 	{

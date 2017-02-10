@@ -16,6 +16,6 @@ $(LIB_BASE):$(PATS)
 clean:
 	rm -rf *.o $(LIB_BASE) $(LIB_BASE_OBJS)
 clear:
-	mv libgeoload.so ../
+	mv libgeoload.so ../build
 cl:
 	rm -rf *.o

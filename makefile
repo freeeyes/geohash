@@ -32,7 +32,7 @@ LIB_BASE_OBJS = geohash.o \
 
 LIB_BASE = mapchinapos
 
-all: mapchinapos
+all: mapchinapos clear
 
 # ?????
 all:$(LIB_BASE) makefile
@@ -43,5 +43,7 @@ $(LIB_BASE):$(PATS)
 # ??
 clean:
 	rm -rf *.o  $(LIB_BASE) $(LIB_BASE_OBJS)
+clear:
+	mv mapchinapos ./build	
 cl:
 	rm -rf *.o 
