@@ -7,9 +7,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
-#include <errno.h>
-#include <pthread.h>
 #include <dlfcn.h>
 #include "soapH.h"
 #include "httppost.h"
@@ -534,7 +531,7 @@ int Chlid_Run()
       soap_thr[i] = soap_copy(&soap);
       soap_set_mode(soap_thr[i], SOAP_C_UTFSTRING);
       pthread_t tid;
-      pthread_create(&tid, NULL, (void*(*)(void*))process_queue, (void*)NULL);
+      pthread_create(&tid, NULL, (void*(*)(void*))process_queue, (void*)soap_thr[i]);
   }
   
   for (;;)
@@ -641,7 +638,6 @@ int main()
 	}
 	
 	//Gdaemon();
-  
 	while (1)
 	{
 		for (int nChlidIndex = 1; nChlidIndex <= nNumChlid; nChlidIndex++)

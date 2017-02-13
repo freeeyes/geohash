@@ -1,6 +1,11 @@
 #ifndef GEO_COMMON_H
 #define GEO_COMMON_H
 
+#include <pthread.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include "stdio.h"
 #include "time.h"
 
@@ -85,15 +90,46 @@ struct _PosLink_Info
 
 struct _Area_Info
 {
-	char           m_szHashGeo[MAX_GEO_SIZE];
-	_PosLink_Info* m_pPosList;           //Pos链表信息
-	char           m_cUsed;              //是否被使用，0为未被使用，1为已使用 
-	int            m_nIndex;             //当前的Pool对象ID
+	pthread_rwlock_t     m_rwLock;                     //区域读写锁
+	char                 m_szHashGeo[MAX_GEO_SIZE];    //geo字符串
+	_PosLink_Info*       m_pPosList;                   //Pos链表信息
+	char                 m_cUsed;                      //是否被使用，0为未被使用，1为已使用 
+	int                  m_nIndex;                     //当前的Pool对象ID
 	
 	void Init()
 	{
 		m_szHashGeo[0] = '\0';
 		m_pPosList     = NULL;
+		
+		pthread_rwlockattr_t rwLockAttr;                 
+		//初始化读写锁
+		if(0 != pthread_rwlockattr_init(&rwLockAttr))
+		{
+			printf("[_Area_Info::Init]init rwlockattr attribute is failed ! erro reason is %s!\n", strerror(errno));
+		}
+		
+    if(pthread_rwlockattr_setpshared(&rwLockAttr, PTHREAD_PROCESS_SHARED)!=0)
+    {
+        printf("[_Area_Info::Init]set rw lockattrite value is failed ! error reason is %s!\n",strerror(errno));
+    }
+    if(pthread_rwlock_init(&m_rwLock,&rwLockAttr)!=0)
+    {
+        printf("[_Area_Info::Init]init rw lock  attribute is failed !error reason is %s\n",strerror(errno));
+    }	
+	}
+	
+	void Load()
+	{
+		m_pPosList = NULL;
+		//系统重启后释放一次写锁，防止系统崩溃后
+		pthread_rwlock_unlock(&m_rwLock);
+	}
+	
+	void Clear()
+	{
+		m_szHashGeo[0] = '\0';
+		m_cUsed        = 0;
+		
 	}
 	
 	void Set_Index(int nIndex)

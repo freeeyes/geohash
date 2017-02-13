@@ -56,7 +56,7 @@ size_t CAreaInfoPool::Load(int nPoolCount, char* pData)
 	
 	for(int i = 0; i < nPoolCount; i++)
 	{
-		m_AreaInfoList[i].m_pPosList = NULL;
+		m_AreaInfoList[i].Load();
 	}
 	
 	m_nPoolCount   = nPoolCount;
@@ -162,7 +162,7 @@ bool CAreaInfoPool::Delete(_Area_Info* pWordInfo)
 		return false;
 	}
 	
-	m_AreaInfoList[pWordInfo->Get_Index()].m_cUsed = 0;
+	m_AreaInfoList[pWordInfo->Get_Index()].Clear();
 	return true;	
 }
 

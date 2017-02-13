@@ -151,12 +151,23 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 			//当前经纬度和之前的经纬度已经不在一个区域，则先删除之前区域的存在点
 			int nAreaBefore = m_objHashArea.Get_Hash_Box_Data(pBeforeGeo);
 			pBeforeAreaInfo = m_objAreaInfoList.Get_NodeOffset_Ptr(nAreaBefore);
+			
+			//这里添加写锁
+			pthread_rwlock_wrlock(&pBeforeAreaInfo->m_rwLock);
+			
 			pPosLinkInfo = pBeforeAreaInfo->Get(nPosBefore);
 			if(NULL != pPosLinkInfo)
 			{
 				//回收连接节点
 				//printf("[CMapInfo::AddPos]Delete pPosLinkInfo->nIndex=%d,nPosBefore=%d,pPosLinkInfo=0x%08x.\n", pPosLinkInfo->Get_Index(), nPosBefore,pPosLinkInfo);
 				pBeforeAreaInfo->Delete(pPosLinkInfo);
+				if(NULL == pBeforeAreaInfo->m_pPosList)
+				{
+					//如果此区域已经没有别的车，则回收区域
+					m_objAreaInfoList.Delete(pBeforeAreaInfo);
+					m_objHashArea.Del_Hash_Data(pBeforeGeo);
+				}
+				
 				m_objPosLinkList.Delete(pPosLinkInfo);
 			}
 			else
@@ -216,7 +227,10 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 					printf("[CMapInfo::AddPos]m_objHashArea is full.\n");
 					return false;						
 				}			
-			}	
+			}
+			
+			//释放写锁
+			pthread_rwlock_unlock(&pBeforeAreaInfo->m_rwLock);				
 		}
 		else
 		{
@@ -258,6 +272,9 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 			//如果已经存在
 			pCurrAreaInfo = m_objAreaInfoList.Get_NodeOffset_Ptr(nAreaCurr);
 			
+			//这里添加写锁
+			pthread_rwlock_wrlock(&pCurrAreaInfo->m_rwLock);
+			
 			pPosLinkInfo = m_objPosLinkList.Create();
 			if(NULL != pPosLinkInfo)
 			{
@@ -270,6 +287,9 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 			{
 				printf("[CMapInfo::AddPos](%d)new pPosLinkInfo = NULL.\n", nPosBefore);
 			}
+			
+			//释放写锁
+			pthread_rwlock_unlock(&pCurrAreaInfo->m_rwLock);				
 		}
 		else
 		{
@@ -280,6 +300,9 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 				printf("[CMapInfo::AddPos]pCurrAreaInfo is full.\n");
 				return false;							
 			}
+			
+			//这里添加写锁
+			pthread_rwlock_wrlock(&pCurrAreaInfo->m_rwLock);			
 			
 			pPosLinkInfo = m_objPosLinkList.Create();
 			if(NULL != pPosLinkInfo)
@@ -300,6 +323,9 @@ bool CMapInfo::AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongi
 				printf("[CMapInfo::AddPos]m_objHashArea is full.\n");
 				return false;						
 			}
+			
+			//释放写锁
+			pthread_rwlock_unlock(&pCurrAreaInfo->m_rwLock);						
 		}	
 	}
 	
@@ -349,10 +375,10 @@ bool CMapInfo::FindPos(double dPosLatitude, double dPosLongitude, double dDistan
 	vector<string> objNeighborsList;
 	GetNeighbors(dPosLatitude, dPosLongitude, dDistance, objNeighborsList);
 	
-	//遍历查找最近的九宫格
+	//遍历查找在指定范围内存在的区域
 	for(int i = 0; i < (int)objNeighborsList.size(); i++)
 	{
-		//printf("[CMapInfo::FindPos](%d)m_szNerghbors=%s.\n", i, objNeighborsList[i].c_str());
+		printf("[CMapInfo::FindPos](%d)m_szNerghbors=%s.\n", i, objNeighborsList[i].c_str());
 		int nAreaCurr = m_objHashArea.Get_Hash_Box_Data(objNeighborsList[i].c_str());
 		if(nAreaCurr != -1)
 		{
@@ -360,6 +386,10 @@ bool CMapInfo::FindPos(double dPosLatitude, double dPosLongitude, double dDistan
 			pCurrArea = m_objAreaInfoList.Get_NodeOffset_Ptr(nAreaCurr);
 			if(NULL != pCurrArea)
 			{
+				printf("[CMapInfo::FindPos]pCurrArea->m_rwLock=0x%08x.\n", &pCurrArea->m_rwLock);
+				//添加读锁
+				pthread_rwlock_rdlock(&pCurrArea->m_rwLock);
+				
 				_PosLink_Info* pTail = pCurrArea->m_pPosList;
 				//printf("[CMapInfo::FindPos]pCurrArea pTail=0x%08x.\n", pTail);
 				
@@ -381,6 +411,9 @@ bool CMapInfo::FindPos(double dPosLatitude, double dPosLongitude, double dDistan
 					
 					pTail = pTail->m_pNext;
 				}
+				
+				//释放读锁
+				pthread_rwlock_unlock(&pCurrArea->m_rwLock);					
 			}
 		}
 	}
