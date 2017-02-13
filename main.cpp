@@ -51,10 +51,30 @@ struct _Ini_Data
 	}
 };
 
+//模块工作线程对象
+struct _Module_threadInfo
+{
+	IMapInfo* pMapInfo;
+	int (*Runtime_Thread)(IMapInfo* pMapInfo);
+};
 
 //全局GeoHashMap接口
 CMapInfo g_objMapInfo;
 _Ini_Data g_objIniData;
+void* g_pModulehandle = NULL;
+_Module_threadInfo g_Module_threadInfo;
+
+int head = 0;
+int tail = 0;
+pthread_mutex_t queue_cs;
+pthread_cond_t queue_cv;
+
+static SOAP_SOCKET dequeue();
+static int enqueue(SOAP_SOCKET sock);
+static void *process_queue(void *soap);
+static void *process_module(void *parg);
+int text_post_handler(struct soap *soap);
+int sendPost(char *url,char *cont);
 
 //读取Ini文件
 void Load_Ini_Data(_Ini_Data& obj_Ini_Data)
@@ -75,35 +95,43 @@ void Load_Ini_Data(_Ini_Data& obj_Ini_Data)
 }
 
 //加载初始化内存插件
-int Load_Init_Memory_Logic(const char* pLogicFile, IMapInfo* pMapInfo)
+int Load_Init_Memory_Logic(const char* pLogicFile, IMapInfo* pMapInfo, bool blCreate)
 {
-	void* m_pModulehandle = NULL;
-	
 	//加载插件
-	m_pModulehandle = dlopen(pLogicFile, RTLD_NOW);
-	if(NULL == m_pModulehandle)
+	g_pModulehandle = dlopen(pLogicFile, RTLD_NOW);
+	if(NULL == g_pModulehandle)
 	{
 		printf("[Load_Init_Memory_Logic]dlopen(%s) error(%s).\n", pLogicFile, dlerror());
 		return -1;
 	}
 	
 	int (*LoadModuleData)(IMapInfo* pMapInfo);
-	LoadModuleData = (int(*)(IMapInfo* pMapInfo))dlsym(m_pModulehandle, "LoadModuleData");
+	LoadModuleData = (int(*)(IMapInfo* pMapInfo))dlsym(g_pModulehandle, "LoadModuleData");
 	if(NULL == LoadModuleData)
 	{
 		printf("[Load_Init_Memory_Logic](%s)(%s) LoadModuleData no find.\n", pLogicFile, dlerror());
 		return -1;
 	}
 	
-	//调用插件方法
-	int nRet = LoadModuleData(pMapInfo);
-	if(0 != nRet)
+	if(true == blCreate)
 	{
-		printf("[Load_Init_Memory_Logic](%s) LoadModuleData is error(%d).\n", pLogicFile, nRet);
-		return -1;		
+		//调用插件方法，初始化共享内存
+		int nRet = LoadModuleData(pMapInfo);
+		if(0 != nRet)
+		{
+			printf("[Load_Init_Memory_Logic](%s) LoadModuleData is error(%d).\n", pLogicFile, nRet);
+			return -1;		
+		}
 	}
 	
-	dlclose(m_pModulehandle);
+	//运行插件单独数据处理线程
+	pthread_t tid;
+	g_Module_threadInfo.pMapInfo       = pMapInfo;
+	g_Module_threadInfo.Runtime_Thread = (int(*)(IMapInfo* pMapInfo))dlsym(g_pModulehandle, "Runtime_Thread");
+	
+	pthread_create(&tid, NULL, (void*(*)(void*)) process_module, (void*)&g_Module_threadInfo);
+	
+	//dlclose(g_pModulehandle);
 	
 	return 0;
 }
@@ -198,17 +226,6 @@ int SeeLock(int fd, int start, int len)
 	return 0;
 }
 
-int head = 0;
-int tail = 0;
-pthread_mutex_t queue_cs;
-pthread_cond_t queue_cv;
-
-static SOAP_SOCKET dequeue();
-static int enqueue(SOAP_SOCKET sock);
-static void *process_queue(void *soap);
-int text_post_handler(struct soap *soap);
-int sendPost(char *url,char *cont);
-
 SOAP_NMAC struct Namespace namespaces[] =
 {
 	{"SOAP-ENV", "http://schemas.xmlsoap.org/soap/envelope/", "http://www.w3.org/*/soap-envelope", NULL},
@@ -289,6 +306,19 @@ static void *process_queue(void *soap)
         soap_end(tsoap);
     }
     return NULL;
+}
+
+static void *process_module(void *parg)
+{
+	_Module_threadInfo* p_Module_threadInfo = (_Module_threadInfo*)parg;
+	//printf("[process_module]Init.\n");
+	if(NULL != p_Module_threadInfo)
+	{
+		p_Module_threadInfo->Runtime_Thread(p_Module_threadInfo->pMapInfo);
+	}
+	
+	printf("[process_module]Finish.\n");
+	return NULL;
 }
 
 int text_post_handler(struct soap *soap)
@@ -451,7 +481,7 @@ int Chlid_Run()
 			g_objMapInfo.Init(pData);
 			
 			//共享内存建立，这里加载初始化插件
-			if(0 != Load_Init_Memory_Logic(g_objIniData.m_strLoadModuleName.c_str(), (IMapInfo* )&g_objMapInfo))
+			if(0 != Load_Init_Memory_Logic(g_objIniData.m_strLoadModuleName.c_str(), (IMapInfo* )&g_objMapInfo, true))
 			{
 				exit(0);
 			}
@@ -459,6 +489,7 @@ int Chlid_Run()
 		else
 		{
 			g_objMapInfo.Load(pData);
+			Load_Init_Memory_Logic(g_objIniData.m_strLoadModuleName.c_str(), (IMapInfo* )&g_objMapInfo, false);
 		}
 	}
 	else
@@ -502,7 +533,8 @@ int Chlid_Run()
   {
       soap_thr[i] = soap_copy(&soap);
       soap_set_mode(soap_thr[i], SOAP_C_UTFSTRING);
-      pthread_create(&tid[i], NULL, (void*(*)(void*)) process_queue,(void*) soap_thr[i]);
+      pthread_t tid;
+      pthread_create(&tid, NULL, (void*(*)(void*))process_queue, (void*)NULL);
   }
   
   for (;;)
@@ -608,7 +640,7 @@ int main()
 		write(fd_lock, &nIndex, sizeof(nIndex));
 	}
 	
-	Gdaemon();
+	//Gdaemon();
   
 	while (1)
 	{
