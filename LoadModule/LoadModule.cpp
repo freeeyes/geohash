@@ -26,7 +26,7 @@ int LoadModuleData(IMapInfo* pMapInfo)
 	time_t ttNow = time(NULL);
 	pMapInfo->AddPos("13661201024", 39.928167, 116.389550, ttNow);
 	
-	pMapInfo->AddPos("13661201025", 39.928167, 116.389550, ttNow);
+	//pMapInfo->AddPos("13661201025", 39.928167, 116.389550, ttNow);
 	
 	return 0;
 }
@@ -40,6 +40,13 @@ int Runtime_Thread(IMapInfo* pMapInfo)
 	while(true)
 	{
 		printf("[Runtime_Thread]Do.\n");
+		vector<_Pos_Info*> vecPosList;
+		pMapInfo->FindPos(39.928167, 116.389550,10000.0f, vecPosList);
+		for(int i = 0; i < (int)vecPosList.size(); i++)
+		{
+			printf("[Runtime_Thread]msisdn=%s.\n", vecPosList[i]->m_szMsisdn);
+		}
+		printf("[Runtime_Thread]Done.\n");
 		sleep(SLEEP_TIME);
 	}
 	
