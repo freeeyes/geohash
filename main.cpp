@@ -69,7 +69,6 @@ pthread_cond_t queue_cv;
 static SOAP_SOCKET dequeue();
 static int enqueue(SOAP_SOCKET sock);
 static void *process_queue(void *soap);
-static void *process_module(void *parg);
 int text_post_handler(struct soap *soap);
 int sendPost(char *url,char *cont);
 
@@ -121,12 +120,9 @@ int Load_Init_Memory_Logic(const char* pLogicFile, IMapInfo* pMapInfo, bool blCr
 		}
 	}
 	
-	//运行插件单独数据处理线程
-	pthread_t tid;
+	//设置插件单独数据处理进程的参数
 	g_Module_threadInfo.pMapInfo       = pMapInfo;
 	g_Module_threadInfo.Runtime_Thread = (int(*)(IMapInfo* pMapInfo))dlsym(g_pModulehandle, "Runtime_Thread");
-	
-	pthread_create(&tid, NULL, (void*(*)(void*)) process_module, (void*)&g_Module_threadInfo);
 	
 	//dlclose(g_pModulehandle);
 	
@@ -305,19 +301,6 @@ static void *process_queue(void *soap)
     return NULL;
 }
 
-static void *process_module(void *parg)
-{
-	_Module_threadInfo* p_Module_threadInfo = (_Module_threadInfo*)parg;
-	//printf("[process_module]Init.\n");
-	if(NULL != p_Module_threadInfo)
-	{
-		p_Module_threadInfo->Runtime_Thread(p_Module_threadInfo->pMapInfo);
-	}
-	
-	printf("[process_module]Finish.\n");
-	return NULL;
-}
-
 int text_post_handler(struct soap *soap)
 { 
 	//处理Json字符串
@@ -455,7 +438,8 @@ int text_post_handler(struct soap *soap)
   return SOAP_OK;
 }
 
-int Chlid_Run()
+//主进程初始化共享内存过程
+int Init_share_Memory()
 {
 	//读取ini文件
 	Load_Ini_Data(g_objIniData);
@@ -493,96 +477,113 @@ int Chlid_Run()
 	{
 		printf("[main]Create share memory is fail.\n");
 		return 0;
-	}
+	}	
+}
 
-	//初始化Http服务相关 	
-	int ret = 0;
-	char *buf;
-  size_t len;
-  struct soap soap;
-
-  soap_init(&soap);
-  soap_set_omode(&soap, SOAP_C_UTFSTRING);
-
-  struct http_post_handlers handlers[] =
-  { 
-    { "text/*",    text_post_handler },
-    { "text/*;*",  text_post_handler },
-    { "POST",      text_post_handler },
-    { NULL }
-  };
-  soap_register_plugin_arg(&soap, http_post, handlers); 
-  struct soap *soap_thr[MAX_THR];
-  pthread_t tid[MAX_THR];
-  SOAP_SOCKET m, s;
-  int i;
-
-  m = soap_bind(&soap, NULL, g_objIniData.m_nHttpPort, BACKLOG);
-  if (!soap_valid_socket(m))
-  {
-      printf("soap_valid_socket\n");
- 			return 1;
+int Chlid_Run(int nChlidIndex)
+{
+	printf("[Chlid_Run]nChlidIndex=%d.\n", nChlidIndex);
+	
+	if(nChlidIndex == 1)
+	{
+		printf("[Chlid_Run]Http process start.\n");
+		//初始化Http服务相关 	
+		int ret = 0;
+		char *buf;
+	  size_t len;
+	  struct soap soap;
+	
+	  soap_init(&soap);
+	  soap_set_omode(&soap, SOAP_C_UTFSTRING);
+	
+	  struct http_post_handlers handlers[] =
+	  { 
+	    { "text/*",    text_post_handler },
+	    { "text/*;*",  text_post_handler },
+	    { "POST",      text_post_handler },
+	    { NULL }
+	  };
+	  soap_register_plugin_arg(&soap, http_post, handlers); 
+	  struct soap *soap_thr[MAX_THR];
+	  pthread_t tid[MAX_THR];
+	  SOAP_SOCKET m, s;
+	  int i;
+	
+	  m = soap_bind(&soap, NULL, g_objIniData.m_nHttpPort, BACKLOG);
+	  if (!soap_valid_socket(m))
+	  {
+	      printf("soap_valid_socket\n");
+	 			return 1;
+	  }
+	 
+	  pthread_mutex_init(&queue_cs, NULL);
+	  pthread_cond_init(&queue_cv, NULL);
+	  for (i = 0; i < MAX_THR; i++)
+	  {
+	      soap_thr[i] = soap_copy(&soap);
+	      soap_set_mode(soap_thr[i], SOAP_C_UTFSTRING);
+	      pthread_t tid;
+	      pthread_create(&tid, NULL, (void*(*)(void*))process_queue, (void*)soap_thr[i]);
+	  }
+	  
+	  for (;;)
+	  {
+	      s = soap_accept(&soap);
+	      if (!soap_valid_socket(s))
+	      {
+	          if (soap.errnum)
+	          {
+	              soap_print_fault(&soap, stderr);
+	              continue; 
+	          }
+	          else
+	          {  
+	              break;
+	          }
+	      }
+	      while (enqueue(s) == SOAP_EOM)
+	      {
+	          sleep(1);
+	      }
+	  }
+	 
+	  for (i = 0; i < MAX_THR; i++)
+	  {
+	      while (enqueue(SOAP_INVALID_SOCKET) == SOAP_EOM)
+	      {
+	          sleep(1);
+	      }
+	  }
+	 
+	  for (i = 0; i < MAX_THR; i++)
+	  {
+	      pthread_join(tid[i], NULL);
+	      soap_done(soap_thr[i]);
+	      free(soap_thr[i]);
+	  }
+	  
+	  pthread_mutex_destroy(&queue_cs);
+	  pthread_cond_destroy(&queue_cv);
+	 
+	  soap_done(&soap); 
   }
- 
-  pthread_mutex_init(&queue_cs, NULL);
-  pthread_cond_init(&queue_cv, NULL);
-  for (i = 0; i < MAX_THR; i++)
+  else if(nChlidIndex == 2)
   {
-      soap_thr[i] = soap_copy(&soap);
-      soap_set_mode(soap_thr[i], SOAP_C_UTFSTRING);
-      pthread_t tid;
-      pthread_create(&tid, NULL, (void*(*)(void*))process_queue, (void*)soap_thr[i]);
+  	printf("[Chlid_Run]Pos Write process start.\n");
+  	
+  	//启动插件进程
+  	g_Module_threadInfo.Runtime_Thread(g_Module_threadInfo.pMapInfo);
   }
-  
-  for (;;)
-  {
-      s = soap_accept(&soap);
-      if (!soap_valid_socket(s))
-      {
-          if (soap.errnum)
-          {
-              soap_print_fault(&soap, stderr);
-              continue; 
-          }
-          else
-          {  
-              break;
-          }
-      }
-      while (enqueue(s) == SOAP_EOM)
-      {
-          sleep(1);
-      }
-  }
- 
-  for (i = 0; i < MAX_THR; i++)
-  {
-      while (enqueue(SOAP_INVALID_SOCKET) == SOAP_EOM)
-      {
-          sleep(1);
-      }
-  }
- 
-  for (i = 0; i < MAX_THR; i++)
-  {
-      pthread_join(tid[i], NULL);
-      soap_done(soap_thr[i]);
-      free(soap_thr[i]);
-  }
-  
-  pthread_mutex_destroy(&queue_cs);
-  pthread_cond_destroy(&queue_cv);
- 
-  soap_done(&soap); 	
 	
 	//delete[] pData;
 	return 0;
+
 }
 
 int main()
 {
 	//当前监控子线程个数
-	int nNumChlid = 1;
+	int nNumChlid = 2;
 	
 	//检测时间间隔参数
 	struct timespec tsRqt;
@@ -637,6 +638,9 @@ int main()
 		write(fd_lock, &nIndex, sizeof(nIndex));
 	}
 	
+	//初始化共享内存
+	Init_share_Memory();
+	
 	//Gdaemon();
 	while (1)
 	{
@@ -660,7 +664,7 @@ int main()
 				}
 				
 				//启动子进程
-				Chlid_Run();
+				Chlid_Run(nChlidIndex);
 				
 				//子进程在执行完任务后必须退出循环和释放锁 
 				ReleaseLock(fd_lock, nChlidIndex * sizeof(int), sizeof(int));	        
