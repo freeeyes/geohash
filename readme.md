@@ -36,3 +36,8 @@ curl -XPOST "http://127.0.0.1:10000/GeoHash/Add/" -d "{\"Msisdn\":\"13412345637\
 ###查询区域中的所有当前点
 
 curl -XPOST "http://127.0.0.1:10000/GeoHash/Search/" -d "{\"Latitude\":\"39.928367\",\"Longitude\":\"116.389550\",\"Radius\":\"100000.0\"}"
+
+###删除一个区域中的指定点
+
+curl -XPOST "http://127.0.0.1:10000/GeoHash/Delete/" -d "{\"Msisdn\":\"13412345637\"}"
+

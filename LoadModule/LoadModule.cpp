@@ -26,22 +26,38 @@ int LoadModuleData(IMapInfo* pMapInfo)
 	time_t ttNow = time(NULL);
 	pMapInfo->AddPos("13661201024", 39.928167, 116.389550, ttNow);
 	
-	//pMapInfo->AddPos("13661201025", 39.928167, 116.389550, ttNow);
+	pMapInfo->AddPos("13661201025", 39.928167, 116.389550, ttNow);
 	
 	return 0;
 }
 
-//独立外挂线程，在这里可以进行读取消息队列操作等信息。
+//独立外挂进程，在这里可以进行读取消息队列操作等信息。
 //处理比如经纬度更新等接口等操作。
 //如不过需要，则这里可以什么都不写。
-//主要为C++提供数据入口。
+//主要为C++提供数据入口,也可以做监控。
 int Runtime_Thread(IMapInfo* pMapInfo)
 {
+	char szTestMsisdn[15] = {'\0'};
+	sprintf(szTestMsisdn, "13661201024");
+	
 	while(true)
 	{
 		printf("[Runtime_Thread]Do.\n");
 		vector<_Pos_Info*> vecPosList;
-		pMapInfo->FindPos(39.928167, 116.389550,10000.0f, vecPosList);
+		
+		//测试删除一个当前点
+		bool blState = pMapInfo->DelPos(szTestMsisdn);
+		if(true == blState)
+		{
+			printf("[Runtime_Thread](%s)Delete OK.\n", szTestMsisdn);
+		}
+		
+		//添加一个当前点
+		time_t ttNow = time(NULL);
+		pMapInfo->AddPos(szTestMsisdn, 39.928187, 116.389550, ttNow);
+		
+		//查询一个当前点
+		pMapInfo->FindPos(39.928167, 116.389550,10000.0, vecPosList);
 		for(int i = 0; i < (int)vecPosList.size(); i++)
 		{
 			printf("[Runtime_Thread]msisdn=%s.\n", vecPosList[i]->m_szMsisdn);

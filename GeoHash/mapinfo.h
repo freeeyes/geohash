@@ -25,6 +25,8 @@ public:
 	
 	bool FindPos(double dPosLatitude, double dPosLongitude, double dDistance, vector<_Pos_Info*>& vecPosList);
 	
+	bool DelPos(const char* pMsisdn);
+	
 	size_t GetSize(int nMaxCount);
 	
 private:

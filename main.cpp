@@ -427,7 +427,35 @@ int text_post_handler(struct soap *soap)
 			{
 				sprintf(retBuf, "{\"error\":\"1\"}");
 			}										
-		}					
+		}	
+		else if(strcmp(soap->path, "/GeoHash/Delete/") == 0)
+		{
+			//删除指定节点
+			char   szMsisdn[15]   = {'\0'};
+			
+			//解析添加当前点数据参数
+			if(document.HasMember("Msisdn") ==  true)
+			{
+				sprintf(szMsisdn, "%s", document["Msisdn"].GetString());
+			}
+			
+			if(strlen(szMsisdn) > 0)
+			{
+				bool blState = g_objMapInfo.DelPos(szMsisdn);
+				if(true == blState)
+				{
+					sprintf(retBuf, "{\"success\":\"0\"}");
+				}
+				else
+				{
+					sprintf(retBuf, "{\"error\":\"2\"}");
+				}
+			}
+			else
+			{
+				sprintf(retBuf, "{\"error\":\"1\"}");
+			}
+		}
 	}	
 	
 	printf("[text_post_handler]retBuf=%s.\n", retBuf);
