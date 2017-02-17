@@ -41,3 +41,12 @@ curl -XPOST "http://127.0.0.1:10000/GeoHash/Search/" -d "{\"Latitude\":\"39.9283
 
 curl -XPOST "http://127.0.0.1:10000/GeoHash/Delete/" -d "{\"Msisdn\":\"13412345637\"}"
 
+###查询当前共享内存中对象使用情况
+curl -XPOST "http://127.0.0.1:10000/GeoHash/Pool/" -d "{\"aaa\":\"1\"}"
+
+##插件开发指南
+
+运行插件解决两个问题。
+* (1)当共享内存第一次创建，从其他的数据源填充数据到当前内存。也就是LoadModuleData()函数，在这里实现数据加载。
+* (2)独立的Runtime_Thread()函数，这里可以做进程监控，也可以在里面进行一些实时的数据加载，比如从kafka取得当前定位消息后台直接入库。不走http服务。
+

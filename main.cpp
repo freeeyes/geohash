@@ -456,6 +456,11 @@ int text_post_handler(struct soap *soap)
 				sprintf(retBuf, "{\"error\":\"1\"}");
 			}
 		}
+		else if(strcmp(soap->path, "/GeoHash/Pool/") == 0)
+		{
+			string strJson = g_objMapInfo.GetPoolState();
+			sprintf(retBuf, "%s", strJson.c_str());
+		}
 	}	
 	
 	printf("[text_post_handler]retBuf=%s.\n", retBuf);
