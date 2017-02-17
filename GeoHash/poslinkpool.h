@@ -22,10 +22,15 @@ public:
 	
 	_PosLink_Info* Get(int nIndex);
 	
+	_Pool_Info Get_Pool_State();
+	
+	size_t GetSize(int nCount);
+	
 private:
 	char*          m_pBase;          //整个内存开始地址
-	int            m_nPoolCount;
-	int            m_nCurrIndex;
+	int*           m_pUsedCount;     //当前内存池已经使用对象个数
+	int*           m_pPoolCount;     //当前池中对象总数
+	int*           m_pCurrIndex;     //当前节点位置
 	_PosLink_Info* m_PosLinkList;    //内存池列表			
 };
 

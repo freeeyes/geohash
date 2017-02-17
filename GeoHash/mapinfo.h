@@ -27,6 +27,8 @@ public:
 	
 	bool DelPos(const char* pMsisdn);
 	
+	string GetPoolState();
+	
 	size_t GetSize(int nMaxCount);
 	
 private:

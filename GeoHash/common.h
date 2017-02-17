@@ -12,6 +12,19 @@
 //程序需要的结构体都在这里定义
 //add by freeeyes
 
+//内存池使用状态结构
+struct _Pool_Info
+{
+	int m_nPoolCount;    //当前内存池的对象个数
+	int m_nUsedCount;    //当前内存池已使用对象的个数 
+	
+	_Pool_Info()
+	{
+		m_nPoolCount = 0;
+		m_nUsedCount = 0;
+	}
+};
+
 //pos部分
 struct _Pos_Info
 {

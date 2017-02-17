@@ -24,9 +24,15 @@ int LoadModuleData(IMapInfo* pMapInfo)
 	
 	//测试添加两条实时点数据
 	time_t ttNow = time(NULL);
-	pMapInfo->AddPos("13661201024", 39.928167, 116.389550, ttNow);
+	if(true == pMapInfo->AddPos("13661201024", 39.928167, 116.389550, ttNow))
+	{
+		printf("[LoadModuleData](13661201024)Add OK.\n");
+	}
 	
-	pMapInfo->AddPos("13661201025", 39.928167, 116.389550, ttNow);
+	if(true == pMapInfo->AddPos("13661201025", 39.928167, 116.389550, ttNow))
+	{
+		printf("[LoadModuleData](13661201025)Add OK.\n");
+	}
 	
 	return 0;
 }
@@ -43,8 +49,10 @@ int Runtime_Thread(IMapInfo* pMapInfo)
 	while(true)
 	{
 		printf("[Runtime_Thread]Do.\n");
+		
 		vector<_Pos_Info*> vecPosList;
 		
+		/*
 		//测试删除一个当前点
 		bool blState = pMapInfo->DelPos(szTestMsisdn);
 		if(true == blState)
@@ -52,9 +60,17 @@ int Runtime_Thread(IMapInfo* pMapInfo)
 			printf("[Runtime_Thread](%s)Delete OK.\n", szTestMsisdn);
 		}
 		
+		//查询当前内存节点使用状况
+		string strJson = pMapInfo->GetPoolState();
+		printf("[Runtime_Thread]%s.\n", strJson.c_str());		
+		
 		//添加一个当前点
 		time_t ttNow = time(NULL);
-		pMapInfo->AddPos(szTestMsisdn, 39.928187, 116.389550, ttNow);
+		if(true == pMapInfo->AddPos(szTestMsisdn, 39.928187, 116.389550, ttNow))
+		{
+			printf("[Runtime_Thread](%s)Add OK.\n", szTestMsisdn);
+		}
+		*/
 		
 		//查询一个当前点
 		pMapInfo->FindPos(39.928167, 116.389550,10000.0, vecPosList);
@@ -62,6 +78,11 @@ int Runtime_Thread(IMapInfo* pMapInfo)
 		{
 			printf("[Runtime_Thread]msisdn=%s.\n", vecPosList[i]->m_szMsisdn);
 		}
+		
+		//查询当前内存节点使用状况
+		string strJson = pMapInfo->GetPoolState();
+		printf("[Runtime_Thread]%s.\n", strJson.c_str());
+		
 		printf("[Runtime_Thread]Done.\n");
 		sleep(SLEEP_TIME);
 	}

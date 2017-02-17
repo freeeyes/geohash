@@ -18,6 +18,7 @@ public:
 	virtual bool AddPos(const char* pMsisdn, double dPosLatitude, double dPosLongitude, time_t ttPos) = 0;
 	virtual bool FindPos(double dPosLatitude, double dPosLongitude, double dDistance, vector<_Pos_Info*>& vecPosList) = 0;
 	virtual bool DelPos(const char* pMsisdn) = 0;
+	virtual string GetPoolState() = 0;
 };
 
 #endif

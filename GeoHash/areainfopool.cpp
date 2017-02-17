@@ -4,8 +4,9 @@ CAreaInfoPool::CAreaInfoPool()
 {
 	m_pBase        = NULL;
 	m_AreaInfoList = NULL;
-	m_nPoolCount   = 0;
-	m_nCurrIndex   = 0;
+	m_pUsedCount   = NULL;
+	m_pPoolCount   = NULL;
+	m_pCurrIndex   = NULL;
 }
 
 CAreaInfoPool::~CAreaInfoPool()
@@ -19,12 +20,24 @@ void CAreaInfoPool::Close()
 	m_AreaInfoList  = NULL;
 }
 
+size_t CAreaInfoPool::GetSize(int nCount)
+{
+	return sizeof(_Area_Info) * nCount + sizeof(int) * 3;
+}
+
 size_t CAreaInfoPool::Init(int nPoolCount, char* pData)
 {
 	Close();
 	
-	m_pBase     = pData;
 	size_t nPos = 0;
+	
+	m_pBase     = pData;
+	m_pPoolCount = (int* )&pData[nPos];
+	nPos += sizeof(int);
+	m_pUsedCount = (int* )&pData[nPos];
+	nPos += sizeof(int);
+	m_pCurrIndex = (int* )&pData[nPos];
+	nPos += sizeof(int);
 	
 	//printf("[CAreaInfoPool::Init]nPos=%d.\n", nPos);
 	m_AreaInfoList = (_Area_Info* )&pData[nPos];
@@ -37,8 +50,9 @@ size_t CAreaInfoPool::Init(int nPoolCount, char* pData)
 		//printf("[CAreaInfoPool::Init](0)nPos=%d.\n", nPos);
 	}
 	
-	m_nPoolCount   = nPoolCount;
-	m_nCurrIndex   = 0;	
+	(*m_pPoolCount)   = nPoolCount;
+	(*m_pUsedCount)   = 0;
+	(*m_pCurrIndex)   = 0;	
 	
 	return nPos;	
 }
@@ -47,8 +61,15 @@ size_t CAreaInfoPool::Load(int nPoolCount, char* pData)
 {
 	Close();
 	
-	m_pBase       = pData;
 	size_t nPos   = 0;
+	
+	m_pBase       = pData;
+	m_pPoolCount = (int* )&pData[nPos];
+	nPos += sizeof(int);
+	m_pUsedCount = (int* )&pData[nPos];
+	nPos += sizeof(int);
+	m_pCurrIndex = (int* )&pData[nPos];
+	nPos += sizeof(int);	
 	
 	//printf("[CNodePool::Load]nPos=%d.\n", nPos);
 	m_AreaInfoList = (_Area_Info* )&pData[nPos];
@@ -59,15 +80,12 @@ size_t CAreaInfoPool::Load(int nPoolCount, char* pData)
 		m_AreaInfoList[i].Load();
 	}
 	
-	m_nPoolCount   = nPoolCount;
-	m_nCurrIndex   = 0;	
-	
 	return nPos;		
 }
 
 _Area_Info* CAreaInfoPool::Get(int nIndex)
 {
-	if(nIndex < 0 || nIndex >= m_nPoolCount)
+	if(nIndex < 0 || nIndex >= (*m_pPoolCount))
 	{
 		return NULL;
 	}
@@ -82,43 +100,46 @@ _Area_Info* CAreaInfoPool::Create()
 		return NULL;
 	}
 	
-	if(m_nCurrIndex >= m_nPoolCount - 1)
+	if((*m_pCurrIndex) >= (*m_pPoolCount) - 1)
 	{
-		m_nCurrIndex = 0;
+		(*m_pCurrIndex) = 0;
 	}	
 	
-	if(m_AreaInfoList[m_nCurrIndex].m_cUsed == 0)
+	if(m_AreaInfoList[(*m_pCurrIndex)].m_cUsed == 0)
 	{
-		//printf("[CAreaInfoPool::Create]m_nCurrIndex=%d, nIndex=%d.\n", m_nCurrIndex, m_AreaInfoList[m_nCurrIndex].Get_Index());
-		m_AreaInfoList[m_nCurrIndex].m_cUsed = 1;
-		return &m_AreaInfoList[m_nCurrIndex++];
+		//printf("[CAreaInfoPool::Create](*m_pCurrIndex)=%d, nIndex=%d.\n", (*m_pCurrIndex), m_AreaInfoList[(*m_pCurrIndex)].Get_Index());
+		m_AreaInfoList[(*m_pCurrIndex)].m_cUsed = 1;
+		(*m_pUsedCount)++;
+		return &m_AreaInfoList[(*m_pCurrIndex)++];
 	}
 	else
 	{
 		//循环寻找空位
-		for(int i = m_nCurrIndex + 1; i < m_nPoolCount; i++)
+		for(int i = (*m_pCurrIndex) + 1; i < (*m_pPoolCount); i++)
 		{
 			if(m_AreaInfoList[i].m_cUsed == 0)
 			{
-				m_nCurrIndex = i + 1;
-				if(m_nCurrIndex > m_nPoolCount - 1)
+				(*m_pCurrIndex) = i + 1;
+				if((*m_pCurrIndex) > (*m_pPoolCount) - 1)
 				{
-					m_nCurrIndex = 0;
+					(*m_pCurrIndex) = 0;
 				}
 				m_AreaInfoList[i].m_cUsed = 1;
+				(*m_pUsedCount)++;
 				return &m_AreaInfoList[i];				
 			}
 		}
 		
-		//printf("[CAreaInfoPool::Create]m_nCurrIndex=%d,m_nPoolCount=%d.\n", m_nCurrIndex, m_nPoolCount);
+		//printf("[CAreaInfoPool::Create](*m_pCurrIndex)=%d,(*m_pPoolCount)=%d.\n", (*m_pCurrIndex), (*m_pPoolCount));
 		int nStart = 0;
 		//没找到，再重头开始找
-		for(int i = nStart; i < m_nCurrIndex - 1; i++)
+		for(int i = nStart; i < (*m_pCurrIndex) - 1; i++)
 		{
 			if(m_AreaInfoList[i].m_cUsed == 0)
 			{
-				m_nCurrIndex = i + 1;
+				(*m_pCurrIndex) = i + 1;
 				m_AreaInfoList[i].m_cUsed = 1;
+				(*m_pUsedCount)++;
 				return &m_AreaInfoList[i];				
 			}			
 		}
@@ -156,13 +177,22 @@ bool CAreaInfoPool::Delete(_Area_Info* pWordInfo)
 		return false;
 	}
 	
-	if(pWordInfo->Get_Index() >= m_nPoolCount || pWordInfo->Get_Index() < 0)
+	if(pWordInfo->Get_Index() >= (*m_pPoolCount) || pWordInfo->Get_Index() < 0)
 	{
 		printf("[CAreaInfoPool::Delete]Get_Index=%d is unvalid.\n", pWordInfo->Get_Index());
 		return false;
 	}
 	
 	m_AreaInfoList[pWordInfo->Get_Index()].Clear();
+	(*m_pUsedCount)--;
 	return true;	
 }
 
+_Pool_Info CAreaInfoPool::Get_Pool_State()
+{
+	_Pool_Info obj_Pool_Info;
+	obj_Pool_Info.m_nUsedCount = (*m_pUsedCount);
+	obj_Pool_Info.m_nPoolCount = (*m_pPoolCount);
+	//printf("[CAreaInfoPool::Get_Pool_State](*m_pUsedCount)=%d,(*m_pPoolCount)=%d.\n", (*m_pUsedCount), (*m_pPoolCount));
+	return obj_Pool_Info;	
+}

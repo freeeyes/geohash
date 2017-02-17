@@ -37,10 +37,17 @@ size_t CMapInfo::GetSize(int nMaxCount)
 	m_AreaCount = nMaxCount;
 	
 	//printf("[CMapInfo::GetSize]nCount=%d.\n", nMaxCount);
+	/*
 	size_t stSize = 1280 + sizeof(_Area_Info) * m_AreaCount
 									+ m_AreaCount * sizeof(_PosLink_Info)
 								  + m_AreaCount * sizeof(_Pos_Info)
 								  + m_AreaCount * sizeof(_Hash_Table_Cell)* 2;
+	*/
+	size_t stSize = 1280 + m_objPosInfoList.GetSize(nMaxCount) +
+									m_objAreaInfoList.GetSize(nMaxCount) + 
+									m_objPosLinkList.GetSize(nMaxCount) + 
+									m_AreaCount * sizeof(_Hash_Table_Cell)* 2;
+	
 	return stSize;
 }
 
@@ -54,15 +61,15 @@ void CMapInfo::Init(char* pData)
 	
 	//初始化地图
 	m_objAreaInfoList.Init(m_AreaCount, (char* )(pData + nPos));
-	nPos += m_AreaCount * sizeof(_Area_Info);
+	nPos += m_objAreaInfoList.GetSize(m_AreaCount);
 	
 	//初始化用户内存池
 	m_objPosInfoList.Init(m_AreaCount, (char* )(pData + nPos));
-	nPos += m_AreaCount * sizeof(_Pos_Info);
+	nPos += m_objPosInfoList.GetSize(m_AreaCount);
 	
 	//初始化当前点链表表
 	m_objPosLinkList.Init(m_AreaCount, (char* )(pData + nPos));	
-	nPos += m_AreaCount * sizeof(_PosLink_Info);		
+	nPos += m_objPosLinkList.GetSize(m_AreaCount);		
 	
 	//初始化区域Hash表
 	m_objHashArea.Init((char* )(pData + nPos), m_AreaCount, m_pCryptTable);
@@ -85,15 +92,15 @@ void CMapInfo::Load(char* pData)
 	
 	//加载区域内存池
 	m_objAreaInfoList.Load(m_AreaCount, (char* )(pData + nPos));
-	nPos += m_AreaCount * sizeof(_Area_Info);	
+	nPos +=  m_objAreaInfoList.GetSize(m_AreaCount);	
 	
 	//加载定位点内存池
 	m_objPosInfoList.Load(m_AreaCount, (char* )(pData + nPos));
-	nPos += m_AreaCount * sizeof(_Pos_Info);	
+	nPos += m_objPosInfoList.GetSize(m_AreaCount);	
 	
 	//初始化当前点链表表
 	m_objPosLinkList.Load(m_AreaCount, (char* )(pData + nPos));	
-	nPos += m_AreaCount * sizeof(_PosLink_Info);			
+	nPos += m_objPosLinkList.GetSize(m_AreaCount);			
 	
 	//加载区域Hash表
 	m_objHashArea.Load((char* )(pData + nPos), m_AreaCount, m_pCryptTable);
@@ -495,4 +502,30 @@ bool CMapInfo::FindPos(double dPosLatitude, double dPosLongitude, double dDistan
 	}
 	
 	return true;
+}
+
+string CMapInfo::GetPoolState()
+{
+	string strJson;
+	char szTemp[1024] = {'\0'};
+
+	strJson = "{";
+	_Pool_Info obj_Pos_Pool = m_objPosInfoList.Get_Pool_State();
+	sprintf(szTemp, "\"PoolName\":\"Pos_Pool\",\"Used\":\"%d\",\"Free\":\"%d\",\"All\":\"%d\",", obj_Pos_Pool.m_nUsedCount, 
+																																							                 obj_Pos_Pool.m_nPoolCount - obj_Pos_Pool.m_nUsedCount,
+																																							                 obj_Pos_Pool.m_nPoolCount);
+	strJson += (string)szTemp;																														                	
+	_Pool_Info obj_Area_Pool = m_objAreaInfoList.Get_Pool_State();
+	sprintf(szTemp, "\"PoolName\":\"Area_Pool\",\"Used\":\"%d\",\"Free\":\"%d\",\"All\":\"%d\",", obj_Area_Pool.m_nUsedCount, 
+																																							                  obj_Area_Pool.m_nPoolCount - obj_Area_Pool.m_nUsedCount,
+																																							                  obj_Area_Pool.m_nPoolCount);
+	strJson += (string)szTemp;																														                	
+	_Pool_Info obj_PosLink_Pool = m_objPosLinkList.Get_Pool_State();
+	sprintf(szTemp, "\"PoolName\":\"PosLink_Pool\",\"Used\":\"%d\",\"Free\":\"%d\",\"All\":\"%d\"", obj_PosLink_Pool.m_nUsedCount, 
+																																							                    obj_PosLink_Pool.m_nPoolCount - obj_PosLink_Pool.m_nUsedCount,
+																																							                    obj_PosLink_Pool.m_nPoolCount);																																		                 
+	strJson += (string)szTemp;	
+	strJson += "}";
+	
+	return strJson;
 }
