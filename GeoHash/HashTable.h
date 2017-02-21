@@ -165,7 +165,7 @@ public:
 	{
 		if(nIndex < 0 || nIndex > m_nCount - 1)
 		{
-			return NULL;
+			return -1;
 		}
 		else
 		{
@@ -177,7 +177,7 @@ public:
 			else
 			{
 				//数据已经无效
-				return NULL;
+				return -1;
 			}
 		}
 	}
