@@ -20,7 +20,7 @@ public:
 	_Area_Info* Create();
 	int Get_Node_Offset(_Area_Info* pWordInfo);
 	_Area_Info* Get_NodeOffset_Ptr(int nOffset);
-	bool Delete(_Area_Info* pWordInfo);
+	bool Delete(_Area_Info* pAreaInfo);
 	
 	_Area_Info* Get(int nIndex);
 	

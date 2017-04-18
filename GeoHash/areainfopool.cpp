@@ -165,25 +165,25 @@ _Area_Info* CAreaInfoPool::Get_NodeOffset_Ptr(int nOffset)
 	return (_Area_Info* )(m_pBase + nOffset);
 }
 
-bool CAreaInfoPool::Delete(_Area_Info* pWordInfo)
+bool CAreaInfoPool::Delete(_Area_Info* pAreaInfo)
 {
-	if(NULL == m_AreaInfoList || NULL == pWordInfo)
+	if(NULL == m_AreaInfoList || NULL == pAreaInfo)
 	{
 		return false;
 	}	
 	
-	if(-1 == pWordInfo->Get_Index())
+	if(-1 == pAreaInfo->Get_Index())
 	{
 		return false;
 	}
 	
-	if(pWordInfo->Get_Index() >= (*m_pPoolCount) || pWordInfo->Get_Index() < 0)
+	if(pAreaInfo->Get_Index() >= (*m_pPoolCount) || pAreaInfo->Get_Index() < 0)
 	{
-		printf("[CAreaInfoPool::Delete]Get_Index=%d is unvalid.\n", pWordInfo->Get_Index());
+		printf("[CAreaInfoPool::Delete]Get_Index=%d is unvalid.\n", pAreaInfo->Get_Index());
 		return false;
 	}
 	
-	m_AreaInfoList[pWordInfo->Get_Index()].Clear();
+	m_AreaInfoList[pAreaInfo->Get_Index()].Clear();
 	(*m_pUsedCount)--;
 	return true;	
 }

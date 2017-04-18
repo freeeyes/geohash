@@ -37,13 +37,12 @@ private:
 	void GetNeighbors(double dPosLatitude, double dPosLongitude, double dDistance, vector<string>& objNeighborsList);
 	
 private:	
-	char*         m_pCryptTable;     //hash词典算法词
-	CHashTable    m_objHashArea;     //Hash区域地图 
-	CHashTable    m_objHashCurrPos;  //Hash区域地图
-	int           m_AreaCount;       //所有的区域个数 
-	CPosInfoPool  m_objPosInfoList;  //当前点对象池
-	CAreaInfoPool m_objAreaInfoList; //当前区域对象池 
-	CPosLinkPool  m_objPosLinkList;  //当前点链表对象池 
+	CHashTable         m_objHashArea;     //Hash区域地图 
+	CHashTable         m_objHashCurrPos;  //Hash区域地图
+	int                m_AreaCount;       //所有的区域个数 
+	CPosInfoPool       m_objPosInfoList;  //当前点对象池
+	CAreaInfoPool      m_objAreaInfoList; //当前区域对象池 
+	CPosLinkPool       m_objPosLinkList;  //当前点链表对象池 
 };
 
 #endif

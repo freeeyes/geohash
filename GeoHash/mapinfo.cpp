@@ -3,33 +3,10 @@
 CMapInfo::CMapInfo()
 {
 	m_AreaCount   = 0;
-	m_pCryptTable = NULL;
 }
 
 CMapInfo::~CMapInfo()
 {
-}
-
-//hash算法对应的加密字符串词单
-void CMapInfo::prepareCryptTable()
-{
-  unsigned long seed = 0x00100001, index1 = 0, index2 = 0, i;
-  for(index1 = 0; index1 < 0x100; index1++)
-  { 
-    for(index2 = index1, i = 0; i < 5; i++, index2 += 0x100)
-    { 
-      unsigned long temp1, temp2;
-      seed = (seed * 125 + 3) % 0x2AAAAB;
-      temp1 = (seed & 0xFFFF) << 0x10;
-      seed = (seed * 125 + 3) % 0x2AAAAB;
-      temp2 = (seed & 0xFFFF);
-      if(index2 > 1280)
-      {
-      	printf("[prepareCryptTable]index2=%u.\n", (unsigned int)index2);
-      }
-      m_pCryptTable[index2] = (char)(temp1 | temp2); 
-    } 
-  } 		
 }
 
 size_t CMapInfo::GetSize(int nMaxCount)
@@ -37,16 +14,11 @@ size_t CMapInfo::GetSize(int nMaxCount)
 	m_AreaCount = nMaxCount;
 	
 	//printf("[CMapInfo::GetSize]nCount=%d.\n", nMaxCount);
-	/*
-	size_t stSize = 1280 + sizeof(_Area_Info) * m_AreaCount
-									+ m_AreaCount * sizeof(_PosLink_Info)
-								  + m_AreaCount * sizeof(_Pos_Info)
-								  + m_AreaCount * sizeof(_Hash_Table_Cell)* 2;
-	*/
-	size_t stSize = 1280 + m_objPosInfoList.GetSize(nMaxCount) +
+	size_t stSize = m_objPosInfoList.GetSize(nMaxCount) +
 									m_objAreaInfoList.GetSize(nMaxCount) + 
 									m_objPosLinkList.GetSize(nMaxCount) + 
-									m_AreaCount * sizeof(_Hash_Table_Cell)* 2;
+									m_objHashArea.Get_Size(nMaxCount) +
+									m_objHashCurrPos.Get_Size(nMaxCount);
 	
 	return stSize;
 }
@@ -54,10 +26,6 @@ size_t CMapInfo::GetSize(int nMaxCount)
 void CMapInfo::Init(char* pData)
 {
 	size_t nPos = 0;
-	m_pCryptTable = pData;
-	memset(m_pCryptTable, 0, 1280);
-	prepareCryptTable();
-	nPos += 1280;	
 	
 	//初始化地图
 	m_objAreaInfoList.Init(m_AreaCount, (char* )(pData + nPos));
@@ -72,12 +40,12 @@ void CMapInfo::Init(char* pData)
 	nPos += m_objPosLinkList.GetSize(m_AreaCount);		
 	
 	//初始化区域Hash表
-	m_objHashArea.Init((char* )(pData + nPos), m_AreaCount, m_pCryptTable);
-	nPos += m_AreaCount * sizeof(_Hash_Table_Cell);	
+	m_objHashArea.Init_By_Memory((char* )(pData + nPos), m_AreaCount);
+	nPos += m_objHashArea.Get_Size(m_AreaCount);	
 	
 	//初始化当前点Hash表
-	m_objHashCurrPos.Init((char* )(pData + nPos), m_AreaCount, m_pCryptTable);	
-	nPos += m_AreaCount * sizeof(_Hash_Table_Cell);	
+	m_objHashCurrPos.Init_By_Memory((char* )(pData + nPos), m_AreaCount);	
+	nPos += m_objHashCurrPos.Get_Size(m_AreaCount);	
 	
 	
 	
@@ -86,9 +54,7 @@ void CMapInfo::Init(char* pData)
 
 void CMapInfo::Load(char* pData)
 {
-	size_t nPos = 0;
-	m_pCryptTable = pData;
-	nPos += 1280;		
+	size_t nPos = 0;	
 	
 	//加载区域内存池
 	m_objAreaInfoList.Load(m_AreaCount, (char* )(pData + nPos));
@@ -103,12 +69,12 @@ void CMapInfo::Load(char* pData)
 	nPos += m_objPosLinkList.GetSize(m_AreaCount);			
 	
 	//加载区域Hash表
-	m_objHashArea.Load((char* )(pData + nPos), m_AreaCount, m_pCryptTable);
-	nPos += m_AreaCount * sizeof(_Hash_Table_Cell);		
+	m_objHashArea.Load((char* )(pData + nPos), m_AreaCount);
+	nPos += m_objHashArea.Get_Size(m_AreaCount);		
 	
 	//加载定位点Hash表
-	m_objHashCurrPos.Load((char* )(pData + nPos), m_AreaCount, m_pCryptTable);
-	nPos += m_AreaCount * sizeof(_Hash_Table_Cell);			
+	m_objHashCurrPos.Load((char* )(pData + nPos), m_AreaCount);
+	nPos += m_objHashCurrPos.Get_Size(m_AreaCount);			
 	
 	//还原区域链表和区域的映射关系
 	for(int i = 0; i < m_AreaCount; i++)

@@ -144,12 +144,12 @@ _Pos_Info* CPosInfoPool::Create()
 	}		
 }
 
-int CPosInfoPool::Get_Node_Offset(_Pos_Info* pWordInfo)
+int CPosInfoPool::Get_Node_Offset(_Pos_Info* pPoInfo)
 {
 	int nOffset = 0;
-	if(NULL != pWordInfo)
+	if(NULL != pPoInfo)
 	{
-		nOffset = (int)((char* )pWordInfo - m_pBase);
+		nOffset = (int)((char* )pPoInfo - m_pBase);
 	}
 	
 	return nOffset;
