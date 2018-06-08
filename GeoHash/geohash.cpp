@@ -256,36 +256,36 @@ _Geo_Neighbors CGeoHash::GetNeighbors(double dLatitude, double dLongitude, int n
 	sprintf(obj_Geo_Neighbors.m_szNerghbors[0], "%s", Encode(dLatitude, dLongitude, nPrecision));
 	
 	//上
-	sprintf(obj_Geo_Neighbors.m_szNerghbors[1], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 + (obj_Geo_Rect.m_dMaxLongitude - obj_Geo_Rect.m_dMinLongitude),
+	sprintf(obj_Geo_Neighbors.m_szNerghbors[1], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 + (obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude),
 																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2, 
 																						               nPrecision));
 	//下
-	sprintf(obj_Geo_Neighbors.m_szNerghbors[2], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 - (obj_Geo_Rect.m_dMaxLongitude - obj_Geo_Rect.m_dMinLongitude),
+	sprintf(obj_Geo_Neighbors.m_szNerghbors[2], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 - (obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude),
 																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2, 
 																						               nPrecision));	
 	//左
 	sprintf(obj_Geo_Neighbors.m_szNerghbors[3], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2,
-																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 - (obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude), 
+																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 - (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));
 	//右
 	sprintf(obj_Geo_Neighbors.m_szNerghbors[4], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2,
-																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 + (obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude), 
+																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 + (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));
 	//左上
-	sprintf(obj_Geo_Neighbors.m_szNerghbors[5], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 - (obj_Geo_Rect.m_dMaxLongitude - obj_Geo_Rect.m_dMinLongitude),
-																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 - (obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude), 
+	sprintf(obj_Geo_Neighbors.m_szNerghbors[5], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 - (obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude),
+																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 - (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));
 	//右上
-	sprintf(obj_Geo_Neighbors.m_szNerghbors[6], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 + (obj_Geo_Rect.m_dMaxLongitude - obj_Geo_Rect.m_dMinLongitude),
-																						 							 (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 - (obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude), 
+	sprintf(obj_Geo_Neighbors.m_szNerghbors[6], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 + (obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude),
+																						 							 (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 - (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));
 	//左下
-	sprintf(obj_Geo_Neighbors.m_szNerghbors[7], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 - (obj_Geo_Rect.m_dMaxLongitude - obj_Geo_Rect.m_dMinLongitude),
-																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 + (obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude), 
+	sprintf(obj_Geo_Neighbors.m_szNerghbors[7], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 - (obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude),
+																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 + (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));	
 	//右下
-	sprintf(obj_Geo_Neighbors.m_szNerghbors[8], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 + (obj_Geo_Rect.m_dMaxLongitude - obj_Geo_Rect.m_dMinLongitude),
-																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 + (obj_Geo_Rect.m_dMaxLatitude - obj_Geo_Rect.m_dMinLatitude), 
+	sprintf(obj_Geo_Neighbors.m_szNerghbors[8], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 + (obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude),
+																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 + (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));
 	return obj_Geo_Neighbors;																	 															 	
 }
