@@ -271,19 +271,19 @@ _Geo_Neighbors CGeoHash::GetNeighbors(double dLatitude, double dLongitude, int n
 	sprintf(obj_Geo_Neighbors.m_szNerghbors[4], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2,
 																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 + (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));
-	//左上
+	//左下
 	sprintf(obj_Geo_Neighbors.m_szNerghbors[5], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 - (obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude),
 																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 - (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));
-	//右上
+	//右下
 	sprintf(obj_Geo_Neighbors.m_szNerghbors[6], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 + (obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude),
 																						 							 (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 - (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));
-	//左下
+	//左上
 	sprintf(obj_Geo_Neighbors.m_szNerghbors[7], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 - (obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude),
 																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 + (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));	
-	//右下
+	//右上
 	sprintf(obj_Geo_Neighbors.m_szNerghbors[8], "%s", Encode((obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude)/2 + (obj_Geo_Rect.m_dMaxLatitude + obj_Geo_Rect.m_dMinLatitude),
 																						               (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude)/2 + (obj_Geo_Rect.m_dMaxLongitude + obj_Geo_Rect.m_dMinLongitude), 
 																						               nPrecision));
